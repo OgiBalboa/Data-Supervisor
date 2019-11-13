@@ -22,9 +22,12 @@ class dosya_aktar():
         self.anglelist1 = ["0"]
         self.anglelist2 = ["0"]
         self.errorflag = False
-        self.peakcount = 0
-        self.curtime = 0
-        self.peaklist= []
+        self.peakcount1 = 0
+        self.curtime1 = 0
+        self.peakcount2 = 0
+        self.curtime2 = 0
+        self.peaklist1= []
+        self.peaklist2= []        
         try:
             os.chdir(yol)
         except:
@@ -47,9 +50,11 @@ class dosya_aktar():
             if self.errorflag == False:
                     print("Hatalı veri bulunamadı ! ")
                     
-            inf = "Veri Sayisi : " + str(self.vericount-8)+"\nPeak Sayısı : "+ str(self.peakcount) +\
-            "\n Enjeksiyon Başlangıç Peak Time : " + str(self.peaklist[0]) +"\n Enjeksiyon Süresi : "+str(self.peaklist[1])
-            if self.peakcount>2:
+            inf = "Veri Sayisi : " + str(self.vericount-8)+"\nSENSOR 1 ----> Peak Sayısı  :  " + str(self.peakcount1) + \
+            "\nSENSOR 1 ----> Enjeksiyon Başlangıç Zamanı   :  " + str(self.peaklist1[0]) +"\nSENSOR 1 ---->  Enjeksiyon Süresi  :  "+str(self.peaklist1[1]) + \
+            "\n\nSENSOR 2 ----> Peak Sayısı  :  " + str(self.peakcount2) + \
+            "\nSENSOR 2 ----> Enjeksiyon Başlangıç Peak Time  :  " + str(self.peaklist2[0]) + "\nSENSOR 2 ----> Enjeksiyon Süresi :" + str(self.peaklist2[1])
+            if self.peakcount1>2:
                 print("Maşallaah")
             self.veri_sayisi = self.vericount-8
             self.denetle() #ALINAN VERİLERİ İNCELE
@@ -73,7 +78,8 @@ class dosya_aktar():
                     print(self.info)
                     print("*" * 50)
                     self.hatakayit() #HATALI DURUMU BİR LOG DOSYASINA KAYDEDEN FONKSİYON
-                    self.errorflag = True        
+                    self.errorflag = True
+                                                                                                                                        
     def hatakayit(self,):
             os.chdir(self.defaultpath)
             os.chdir("Errors")
@@ -87,17 +93,33 @@ class dosya_aktar():
             self.errorlog.close()
     
     def peakdetect(self,):
-        self.fark1 = abs(float(str(self.sensor1[-1]))) - abs(float(str(self.sensor1[-2]))) 
-        if self.fark1 > abs(float(str(self.sensor1[-1])))*50/100 :#EĞER BASINÇ FARKI %50 DEN FAZLA DEĞİŞMİŞ İSE
-            self.peak()
-
-    def peak(self,):
-        self.peakcount +=1
-        self.reftime = float(str(self.surelist[-1]))
-        self.pressure_time =float(str(self.reftime)) - float(str(self.curtime))
-        self.peaklist.append(self.pressure_time)
-        self.curtime = self.reftime
-        
+        self.fark1 = abs(float(str(self.sensor1[-1]))) - abs(float(str(self.sensor1[-2])))
+        self.fark2 = abs(float(str(self.sensor2[-1]))) - abs(float(str(self.sensor2[-2]))) 
+                                                                                                                                        
+        if self.fark1 > abs(float(str(self.sensor1[-2]))) :#EĞER BASINÇ FARKI %50 DEN FAZLA DEĞİŞMİŞ İSE
+            if 0 < abs(float(str(self.sensor1[-2]))) < 18:
+                pass
+            else :
+                self.peak1()
+        if self.fark2 > abs(float(str(self.sensor2[-2]))):#EĞER BASINÇ FARKI %50 DEN FAZLA DEĞİŞMİŞ İSE
+            if 0 < abs(float(str(self.sensor2[-2]))) < 18:
+                pass
+            else :
+                self.peak2()
+    def peak1(self,):
+        self.peakcount1 +=1
+        self.reftime1 = float(str(self.surelist[-1]))
+        self.pressure_time1 =float(str(self.reftime1)) - float(str(self.curtime1))
+        self.peaklist1.append(self.pressure_time1)
+        self.curtime1 = self.reftime1
+                                                                                                                                        
+    def peak2(self,):
+        self.peakcount2 +=1
+        self.reftime2 = float(str(self.surelist[-1]))
+        self.pressure_time2 =float(str(self.reftime2)) - float(str(self.curtime2))
+        self.peaklist2.append(self.pressure_time2)
+        self.curtime2 = self.reftime2
+         
 #-------------------------------GRAFİK ÇİZDİRME-------------------------------------------------------                         
     def plot (self,):  
             """
@@ -253,4 +275,5 @@ class sorgu():
 #yenisorgu = sorgu()
 
 #yeni = dosya_aktar(yenisorgu.dosya,yenisorgu.dosya_yolu)
+
 
