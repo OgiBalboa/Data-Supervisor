@@ -26,7 +26,7 @@ class dosya_aktar():
         self.curtime1 = 0
         self.peakcount2 = 0
         self.curtime2 = 0
-        self.peaklist1= []
+        self.peaklist1= [] # sonpeak =  peaklist[-1] - peaklist[-2]
         self.peaklist2= []        
         try:
             os.chdir(yol)
@@ -41,26 +41,30 @@ class dosya_aktar():
             
                 self.veriayir()
                 self.hatadetect()
+                """
                 if len(self.surelist) > 2:
                     self.peakdetect() # PEAK VAR MI ?
                 
                 #except :
                     #print("Hata, veri doğru ayrılamadı")
+                """
                 self.vericount+=1
             if self.errorflag == False:
                     print("Hatalı veri bulunamadı ! ")
-                    
-            inf = "Veri Sayisi : " + str(self.vericount-8)+"\nSENSOR 1 ----> Peak Sayısı  :  " + str(self.peakcount1) + \
-            "\nSENSOR 1 ----> Enjeksiyon Başlangıç Zamanı   :  " + str(self.peaklist1[0]) +"\nSENSOR 1 ---->  Enjeksiyon Süresi  :  "+str(self.peaklist1[1]) + \
-            "\n\nSENSOR 2 ----> Peak Sayısı  :  " + str(self.peakcount2) + \
-            "\nSENSOR 2 ----> Enjeksiyon Başlangıç Peak Time  :  " + str(self.peaklist2[0]) + "\nSENSOR 2 ----> Enjeksiyon Süresi :" + str(self.peaklist2[1])
-            if self.peakcount1>2:
-                print("Maşallaah")
-            self.veri_sayisi = self.vericount-8
             self.denetle() #ALINAN VERİLERİ İNCELE
-            os.chdir(self.defaultpath) # ANA DOSYA YOLUNA GERİ DÖN
-            print(inf)
+            #print(self.peaklist1,self.peaklist2)
+            inf = "Veri Sayisi : " + str(self.vericount-8)+"\nSENSOR 1 ----> Peak Sayısı  :  " + str(self.peakcount1) + \
+            "\nSENSOR 1 ----> Enjeksiyon Başlangıç Zamanı   :  " + str(self.peaklist1[0]) +"\nSENSOR 1 ---->  Enjeksiyon Süresi  :  "+str(self.peaklist1[1]-self.peaklist1[0]) + \
+            "\n\nSENSOR 2 ----> Peak Sayısı  :  " + str(self.peakcount2) + \
+            "\nSENSOR 2 ----> Enjeksiyon Başlangıç Peak Time  :  " + str(self.peaklist2[0]) + "\nSENSOR 2 ----> Enjeksiyon Süresi :" + str(self.peaklist2[1]-self.peaklist2[0])
+            if self.peakcount1>2 or self.peakcount2>2:
+                print("Peak sayısı fazla, Hata bulunmuş olabilir.")
+    
+            self.veri_sayisi = self.vericount-8
+
             
+            print(inf)
+            os.chdir(self.defaultpath) # ANA DOSYA YOLUNA GERİ DÖN
     def veriayir(self,):
             self.a = self.r[0].split(',')   # SURE VERİSİNİ AYIRIR
             if self.vericount>6:  #ilk 6 veri info satırlarıdır
@@ -91,35 +95,48 @@ class dosya_aktar():
             self.errorlog.write(self.info)
             self.errorlog.write('\n' + '*'*50 + '\n')
             self.errorlog.close()
-    
+#-------------------------------PEAK BULMA-------------------------------------------------------     
     def peakdetect(self,):
-        self.fark1 = abs(float(str(self.sensor1[-1]))) - abs(float(str(self.sensor1[-2])))
-        self.fark2 = abs(float(str(self.sensor2[-1]))) - abs(float(str(self.sensor2[-2]))) 
-                                                                                                                                        
-        if self.fark1 > abs(float(str(self.sensor1[-2]))) :#EĞER BASINÇ FARKI %50 DEN FAZLA DEĞİŞMİŞ İSE
-            if 0 < abs(float(str(self.sensor1[-2]))) < 18:
-                pass
-            else :
-                self.peak1()
-        if self.fark2 > abs(float(str(self.sensor2[-2]))):#EĞER BASINÇ FARKI %50 DEN FAZLA DEĞİŞMİŞ İSE
-            if 0 < abs(float(str(self.sensor2[-2]))) < 18:
-                pass
-            else :
-                self.peak2()
+        
+        if  len(self.peaklist1)   < 1 and self.anglelist1[-1] > 16 :
+            self.peak1()
+        elif len(self.peaklist1)  >= 1 and self.anglelist1[-1] > 80 :
+            self.peak1()
+        if   len(self.peaklist2)  < 1 and self.anglelist2[-1] > 16 :
+            self.peak2()
+        elif len(self.peaklist2)  >= 1 and self.anglelist2[-1] > 80 :    
+            self.peak2()
+
     def peak1(self,):
-        self.peakcount1 +=1
-        self.reftime1 = float(str(self.surelist[-1]))
+        
+        self.peakno1 = len(self.anglelist1)-1
+        self.reftime1 = float(str(self.surelist[self.peakno1]))
         self.pressure_time1 =float(str(self.reftime1)) - float(str(self.curtime1))
-        self.peaklist1.append(self.pressure_time1)
-        self.curtime1 = self.reftime1
-                                                                                                                                        
+
+        if len(self.peaklist1) >= 1 and  self.reftime1 - float(self.peaklist1[-1])  >= 0.3:
+                self.peaklist1.append(self.reftime1)
+                self.curtime1 = self.reftime1
+                self.peakcount1 +=1
+        elif len(self.peaklist1) < 1 :
+                self.peaklist1.append(self.reftime1)
+                self.curtime1 = self.reftime1
+                self.peakcount1 +=1
+
     def peak2(self,):
-        self.peakcount2 +=1
-        self.reftime2 = float(str(self.surelist[-1]))
+        
+        self.peakno2 = len(self.anglelist2)-1
+        self.reftime2 = float(str(self.surelist[self.peakno2]))
         self.pressure_time2 =float(str(self.reftime2)) - float(str(self.curtime2))
-        self.peaklist2.append(self.pressure_time2)
-        self.curtime2 = self.reftime2
-         
+        
+        if len(self.peaklist2) >= 1 and self.reftime2 - float(self.peaklist2[-1]) >= 0.3:
+                self.peaklist2.append(self.reftime2)
+                self.curtime2 = self.reftime2
+                self.peakcount2 +=1
+        elif len(self.peaklist2) < 1 :
+                self.peaklist2.append(self.reftime2)
+                self.curtime2 = self.reftime2
+                self.peakcount2 +=1
+
 #-------------------------------GRAFİK ÇİZDİRME-------------------------------------------------------                         
     def plot (self,):  
             """
@@ -171,6 +188,7 @@ class dosya_aktar():
              for i in range (0,len(self.surelist)):
                  self.acibul1(i)
                  self.acibul2(i)
+                 self.peakdetect()
 
 #-------------------------------DOSYALARI BULMA MODÜLÜ-------------------------------------------------------      
 class sorgu():
@@ -208,8 +226,13 @@ class sorgu():
             self.penc.destroy()
             check()
             self.search()
+        def immediate():
+            self.sorgu = "C:/Users/ITStaj/Desktop/datasupervisor/Datas/2019-02-07"
+            self.penc.destroy()
+            self.search()
         Button(self.penc,text = "Tarih ile arama ",command = tarih).pack()
         Button(self.penc,text = "Dosya Bul",command = askdir).pack()
+        Button(self.penc,text = " DENEME",command = immediate).pack()
 
         self.penc.mainloop()
                 
@@ -268,12 +291,4 @@ class sorgu():
             if c == 3 and vflag and sflag and cflag:
                 self.flag = True
                 break
-    
-
-        
-
-#yenisorgu = sorgu()
-
-#yeni = dosya_aktar(yenisorgu.dosya,yenisorgu.dosya_yolu)
-
-
+   
