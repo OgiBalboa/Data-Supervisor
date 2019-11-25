@@ -12,6 +12,7 @@ from tkinter import filedialog
 from tkinter import messagebox
 import math
 import numpy as np
+
 class dosya_aktar():
     def __init__(self,isim,yol=None):
         self.vericount = 0
@@ -32,25 +33,17 @@ class dosya_aktar():
             os.chdir(yol)
         except:
             print("dir hatası")
+        print(" ")
 #-------------------------------DOSYA AÇILIR-------------------------------------------------------                         
-        
         with open(isim,newline='') as file:
             spm = csv.reader(file,delimiter=' ',quotechar = '|')
 
-            for self.r in spm:    # DATA İÇERİSİNDEKİ HER BİR VERİYİ DENETLER
-            
+            for self.r in spm:    # DATA İÇERİSİNDEKİ HER BİR VERİYİ DENETLER          
                 self.veriayir()
                 self.hatadetect()
-                """
-                if len(self.surelist) > 2:
-                    self.peakdetect() # PEAK VAR MI ?
-                
-                #except :
-                    #print("Hata, veri doğru ayrılamadı")
-                """
                 self.vericount+=1
             if self.errorflag == False:
-                    print("Hatalı veri bulunamadı ! ")
+                    print("Basınç değerleri istenilen aralıkta ! ")
             self.denetle() #ALINAN VERİLERİ İNCELE
             #print(self.peaklist1,self.peaklist2)
             inf = "Veri Sayisi : " + str(self.vericount-8)+"\nSENSOR 1 ----> Peak Sayısı  :  " + str(self.peakcount1) + \
@@ -58,13 +51,12 @@ class dosya_aktar():
             "\n\nSENSOR 2 ----> Peak Sayısı  :  " + str(self.peakcount2) + \
             "\nSENSOR 2 ----> Enjeksiyon Başlangıç Peak Time  :  " + str(self.peaklist2[0]) + "\nSENSOR 2 ----> Enjeksiyon Süresi :" + str(self.peaklist2[1]-self.peaklist2[0])
             if self.peakcount1>2 or self.peakcount2>2:
-                print("Peak sayısı fazla, Hata bulunmuş olabilir.")
-    
-            self.veri_sayisi = self.vericount-8
-
-            
+                print("HATA ! Peak sayısı fazla, Hata bulunmuş olabilir.")
+                #messagebox.showerror("HATA !","Peak sayısı fazla, Hata bulunmuş olabilir.")   
+            self.veri_sayisi = self.vericount-8            
             print(inf)
             os.chdir(self.defaultpath) # ANA DOSYA YOLUNA GERİ DÖN
+            
     def veriayir(self,):
             self.a = self.r[0].split(',')   # SURE VERİSİNİ AYIRIR
             if self.vericount>6:  #ilk 6 veri info satırlarıdır
@@ -72,8 +64,7 @@ class dosya_aktar():
                 self.surelist.append(str(self.a[0]))
                 self.sensor1.append(str(self.a[1]))
                 self.sensor2.append(str(self.b[0])) #VERİLERİ AYIRIP LİSTELERE KAYDEDER
-                            
-        
+                                    
     def hatadetect(self,):
             if self.vericount > 6:
                 if float(self.b[0]) > 20 or float(self.a[1]) > 20: # HATALI DURUM KOŞULLARI
@@ -86,7 +77,12 @@ class dosya_aktar():
                                                                                                                                         
     def hatakayit(self,):
             os.chdir(self.defaultpath)
-            os.chdir("Errors")
+            try :
+                os.chdir("Errors")
+            except:
+                os.chdir("..")
+                os.chdir("..")
+                os.chdir("Errors")
             print(str(datetime.now())[11:16])
             self.filename  = str(datetime.now())[0:10] + "_"+str(datetime.now())[11:13]+ \
                              "-"+ str(datetime.now())[14:16]+".txt"
@@ -291,4 +287,12 @@ class sorgu():
             if c == 3 and vflag and sflag and cflag:
                 self.flag = True
                 break
-   
+    
+
+        
+
+#yenisorgu = sorgu()
+
+#yeni = dosya_aktar(yenisorgu.dosya,yenisorgu.dosya_yolu)
+
+
