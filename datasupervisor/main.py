@@ -18,6 +18,7 @@ import os
 print("Os lib içeri aktarıldı.")
 #import bin.verianaliz as verianaliz
 import verianaliz
+import filesearch
 sleep(0.2)
 print("veri analiz modülü içeri aktarıldı")
 
@@ -35,13 +36,23 @@ a = 0
 def sorgular():
     global a
     global sorgu
+    anayol = os.getcwd()
     if sorgu == 1:
         print("Dosya Kontrol")
+        file = filesearch.dosyabul()
+        file.findate()
+        while 1:
+            if len(file.data_name) > 1 :
+                analiz = verianaliz.dosya_aktar(file.data_name,file.data_path)
+                input("Enter")
+                analiz.plot()
+                break
+        os.chdir(anayol)
         Menu()
     elif sorgu == 2:
         emp[a] = verianaliz.sorgu()
         b = verianaliz.dosya_aktar(emp[a].dosya,emp[a].dosya_yolu)
-        input('Enterla')
+        input('Grafiği görmek için Enterla')
         b.plot()
         print("Sorgu tamamlandı.\n")
         a+=1
