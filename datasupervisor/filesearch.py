@@ -1,4 +1,3 @@
-
 import os
 import sys
 import time
@@ -7,8 +6,11 @@ class dosyabul():
     def __init__(self,):
 
         self.fileflag = None
-        self.time = str(datetime.now())[0:10]
-        os.chdir ( "Datas")
+        self.filename = ""
+        try: 
+            os.chdir ( "Datas")
+        except:
+            pass
         self.data_name = None
     def findate(self,):
         self.current_date = list(str(datetime.now())[0:10]) 
@@ -34,10 +36,11 @@ class dosyabul():
                 self.current_date[-1] = 9
                 self.current_date[-2] = int(self.current_date[-2]) - 1
                 self.findfile()
-            
-            if self.fileflag == True :
-                self.filename = self.tempname
-                self.detect_new(self.filename)
+        
+            if self.fileflag == True :      
+                self.filename = self.tempname    
+                
+                
                 break
 
     def findfile(self,):
@@ -52,15 +55,9 @@ class dosyabul():
         os.chdir(path)
         self.filecount = os.listdir()
         self.temp_file_count = self.filecount
-        print("Arama basladi")
         while 1:
             self.filecount = os.listdir()
             if len(self.filecount) > len(self.temp_file_count):
                 self.data_name = self.filecount[-1]
                 self.data_path = os.getcwd()
                 break
-"""
-x = dosyabul()
-x.findate()
-
-"""
