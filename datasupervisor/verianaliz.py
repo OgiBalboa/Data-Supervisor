@@ -14,7 +14,7 @@ import math
 import numpy as np
 
 class dosya_aktar():
-    def __init__(self,isim,yol=None):
+    def __init__(self,isim,yol=None,flag =None,noprint = None):
         self.vericount = 0
         self.defaultpath = os.getcwd() #Default dosya yolu
         self.surelist = []
@@ -22,39 +22,56 @@ class dosya_aktar():
         self.sensor2 = []
         self.anglelist1 = ["0"]
         self.anglelist2 = ["0"]
-        self.errorflag = False
         self.peakcount1 = 0
         self.curtime1 = 0
         self.peakcount2 = 0
         self.curtime2 = 0
         self.peaklist1= [] # sonpeak =  peaklist[-1] - peaklist[-2]
-        self.peaklist2= []        
+        self.peaklist2= []
+        self.aramaflag = flag
+        self.isim = isim
+        self.info = ""
+        self.noprint = noprint
         try:
             os.chdir(yol)
         except:
             print("dir hatası")
-        print(" ")
+            print(os.getcwd())
 #-------------------------------DOSYA AÇILIR-------------------------------------------------------                         
         with open(isim,newline='') as file:
             spm = csv.reader(file,delimiter=' ',quotechar = '|')
-
             for self.r in spm:    # DATA İÇERİSİNDEKİ HER BİR VERİYİ DENETLER          
-                self.veriayir()
-                self.hatadetect()
+                self.veriayir()               
                 self.vericount+=1
-            if self.errorflag == False:
-                    print("Basınç değerleri istenilen aralıkta ! ")
+            if self.errorflag == False and self.aramaflag != True and self.noprint != True :
+                print("Basınç Bilgisi :\n")
+                print("Basınç değerleri istenilen aralıkta ! ")
+            elif self.errorflag == True and self.aramaflag != True and self.noprint != True:
+                print("Basınç Bilgisi :\n")
+                print("Hatalı basınç değeri tespit edildi ! ")
             self.denetle() #ALINAN VERİLERİ İNCELE
-            #print(self.peaklist1,self.peaklist2)
-            inf = "Veri Sayisi : " + str(self.vericount-8)+"\nSENSOR 1 ----> Peak Sayısı  :  " + str(self.peakcount1) + \
-            "\nSENSOR 1 ----> Enjeksiyon Başlangıç Zamanı   :  " + str(self.peaklist1[0]) +"\nSENSOR 1 ---->  Enjeksiyon Süresi  :  "+str(self.peaklist1[1]-self.peaklist1[0]) + \
-            "\n\nSENSOR 2 ----> Peak Sayısı  :  " + str(self.peakcount2) + \
-            "\nSENSOR 2 ----> Enjeksiyon Başlangıç Peak Time  :  " + str(self.peaklist2[0]) + "\nSENSOR 2 ----> Enjeksiyon Süresi :" + str(self.peaklist2[1]-self.peaklist2[0])
-            if self.peakcount1>2 or self.peakcount2>2:
-                print("HATA ! Peak sayısı fazla, Hata bulunmuş olabilir.")
-                #messagebox.showerror("HATA !","Peak sayısı fazla, Hata bulunmuş olabilir.")   
+            if self.aramaflag == True:
+                try:
+                    self.zaman_hatasi()
+                except:
+                    self.inf = "Peak Bulunamadı"
+                    self.errorflag = True
+            try :
+                self.inf = "Veri Sayisi : " + str(self.vericount-8)+"\nSENSOR 1 ----> Peak Sayısı  :  " + str(self.peakcount1) + \
+                "\nSENSOR 1 ----> Enjeksiyon Başlangıç Zamanı   :  " + str(self.peaklist1[0]) +"\nSENSOR 1 ---->  Enjeksiyon Süresi  :  "+str(self.peaklist1[1]-self.peaklist1[0]) + \
+                "\n\nSENSOR 2 ----> Peak Sayısı  :  " + str(self.peakcount2) + \
+                "\nSENSOR 2 ----> Enjeksiyon Başlangıç Peak Time  :  " + str(self.peaklist2[0]) + "\nSENSOR 2 ----> Enjeksiyon Süresi :" + str(self.peaklist2[1]-self.peaklist2[0])
+            except:
+                self.inf = "Sensörlerin birinde Peak Bulunamadı.\n Tespit edilen Sensör 1 Peakler : "\
+                           +str(self.peaklist1) + "\nTespit edilen Sensör 2 Peakler : " +str(self.peaklist2)
+            if self.peakcount1>2 or self.peakcount2>2 and self.aramaflag != True and self.noprint != True:
+                print("\nHATA ! Sensörlerin birinde Peak sayısı fazla, Hata bulunmuş olabilir.")
+                self.info += "\nTespit edilen Sensör 1 Peakler : "\
+                           +str(self.peaklist1) + "\nTespit edilen Sensör 2 Peakler : " +str(self.peaklist2)
+                self.errorflag = True
+                if self.aramaflag==True:
+                    self.hatakayit()   
             self.veri_sayisi = self.vericount-8            
-            print(inf)
             os.chdir(self.defaultpath) # ANA DOSYA YOLUNA GERİ DÖN
             
     def veriayir(self,):
@@ -64,17 +81,39 @@ class dosya_aktar():
                 self.surelist.append(str(self.a[0]))
                 self.sensor1.append(str(self.a[1]))
                 self.sensor2.append(str(self.b[0])) #VERİLERİ AYIRIP LİSTELERE KAYDEDER
-                                    
-    def hatadetect(self,):
-            if self.vericount > 6:
-                if float(self.b[0]) > 20 or float(self.a[1]) > 20: # HATALI DURUM KOŞULLARI
-                    self.info = "Süre : "+ str(self.a[0]) + "\nSensör 1: " + str(self.a[1]) + \
-                                "\nSensör 2 : " + str(self.b[0]) 
-                    print(self.info)
-                    print("*" * 50)
+                self.basinchatadetect()
+
+    def zaman_hatasi(self,):
+            if float(self.peaklist1[1]-self.peaklist1[0]) < 5 or float(self.peaklist2[1]-self.peaklist2[0] < 5):
+                    self.info += "\n\nHata Türü : Enjeksiyon Süre Hatası" +"\nSENSOR 1 ----> Peak Sayısı  :  " + str(self.peakcount1) + \
+                    "\nSENSOR 1 ----> Enjeksiyon Başlangıç Zamanı   :  " + str(self.peaklist1[0]) +"\nSENSOR 1 ---->  Enjeksiyon Süresi  :  "+str(self.peaklist1[1]-self.peaklist1[0]) + \
+                    "\n\nSENSOR 2 ----> Peak Sayısı  :  " + str(self.peakcount2) + \
+                    "\nSENSOR 2 ----> Enjeksiyon Başlangıç Peak Time  :  " + str(self.peaklist2[0]) + "\nSENSOR 2 ----> Enjeksiyon Süresi :" + str(self.peaklist2[1]-self.peaklist2[0])
+                    if aramaflag != True:
+                        if self.noprint != True:
+                            print(self.info)
+                            print("*" * 50)
+                        self.errorflag = True
+                        return
                     self.hatakayit() #HATALI DURUMU BİR LOG DOSYASINA KAYDEDEN FONKSİYON
                     self.errorflag = True
-                                                                                                                                        
+            else:
+                self.errorflag = False
+    def basinchatadetect(self,):
+            if self.vericount > 6:
+                if float(self.b[0]) > 20 or float(self.a[1]) > 20: # HATALI DURUM KOŞULLARI
+                    self.info += "\n\nHata Türü : Sensör Basınç Hatası\n" + "Süre : "+ str(self.a[0]) + "\nSensör 1 Basınç Değeri (kPa): " + str(self.a[1]) + \
+                                "\nSensör 2 Basınç Değeri (kPa): " + str(self.b[0]) 
+                    if self.aramaflag != True:
+                        if self.noprint != True:
+                            print(self.info)
+                            print("*" * 50)
+                        self.errorflag = True
+                        return
+                    self.hatakayit() #HATALI DURUMU BİR LOG DOSYASINA KAYDEDEN FONKSİYON
+                    self.errorflag = True
+                else :
+                    self.errorflag = False                                                                                                                                                     
     def hatakayit(self,):
             os.chdir(self.defaultpath)
             try :
@@ -83,14 +122,12 @@ class dosya_aktar():
                 os.chdir("..")
                 os.chdir("..")
                 os.chdir("Errors")
-            print(str(datetime.now())[11:16])
-            self.filename  = str(datetime.now())[0:10] + "_"+str(datetime.now())[11:13]+ \
-                             "-"+ str(datetime.now())[14:16]+".txt"
-            
+            self.filename = "20" + self.isim[-17:-15] +"-"+ self.isim[-15:-13] +"-"+ self.isim[-13:-11] +"_" + self.isim[-11:-9] +"-"+ self.isim[-9:-7] +".txt"
             self.errorlog = open(self.filename,'a+')
             self.errorlog.write(self.info)
             self.errorlog.write('\n' + '*'*50 + '\n')
             self.errorlog.close()
+        
 #-------------------------------PEAK BULMA-------------------------------------------------------     
     def peakdetect(self,):
         
@@ -108,7 +145,8 @@ class dosya_aktar():
         self.peakno1 = len(self.anglelist1)-1
         self.reftime1 = float(str(self.surelist[self.peakno1]))
         self.pressure_time1 =float(str(self.reftime1)) - float(str(self.curtime1))
-
+        if self.reftime1 < 1:
+            return None
         if len(self.peaklist1) >= 1 and  self.reftime1 - float(self.peaklist1[-1])  >= 0.3:
                 self.peaklist1.append(self.reftime1)
                 self.curtime1 = self.reftime1
@@ -123,7 +161,8 @@ class dosya_aktar():
         self.peakno2 = len(self.anglelist2)-1
         self.reftime2 = float(str(self.surelist[self.peakno2]))
         self.pressure_time2 =float(str(self.reftime2)) - float(str(self.curtime2))
-        
+        if self.reftime2 < 1:
+            return None        
         if len(self.peaklist2) >= 1 and self.reftime2 - float(self.peaklist2[-1]) >= 0.3:
                 self.peaklist2.append(self.reftime2)
                 self.curtime2 = self.reftime2
@@ -159,17 +198,25 @@ class dosya_aktar():
             plt.show()
 #-------------------------------VERİLERİN AÇILARINI BULMAK-------------------------------------------------------       
     def acibul1(self,veri):
+            if self.vericount > 1600:
+                gen = 100
+            else:
+                gen = 20
             if veri < len(self.surelist)-1:
                 self.y = float(self.sensor1[veri+1]) - float(self.sensor1[veri])
-                self.x = 100*float(self.surelist[veri+1]) - 100*float(self.surelist[veri])
+                self.x = gen*float(self.surelist[veri+1]) - gen*float(self.surelist[veri])
                 self.tan = self.y / self.x
                 self.angle = math.degrees(math.atan(self.tan))
                 self.anglelist1.append(self.angle)
                 
     def  acibul2(self,veri):
+            if self.vericount > 1600:
+                gen = 100
+            else:
+                gen = 20
             if veri < len(self.surelist)-1:
                 self.y2 = float(self.sensor2[veri+1]) - float(self.sensor2[veri])
-                self.x2 = 100*float(self.surelist[veri+1]) - 100*float(self.surelist[veri])
+                self.x2 = gen*float(self.surelist[veri+1]) - gen*float(self.surelist[veri])
                 self.tan2 = self.y2 / self.x2
                 self.angle2 = math.degrees(math.atan(self.tan2))
                 self.anglelist2.append(self.angle2)
@@ -193,7 +240,6 @@ class sorgu():
         os.chdir("Datas")
         self.temppath = os.getcwd()
         self.gui()
-        
     def gui(self,):
         self.penc = Tk()
         self.penc.title("Veri Analiz")
@@ -211,7 +257,7 @@ class sorgu():
             self.search()
             return None
         def entry():
-            self.entr = Entry(self.penc,width = 5)
+            self.entr = Entry(self.penc,width = 13)
             self.entr.bind("<Return>", (lambda event: atama(self.entr.get())))
             self.entr.pack()
         def tarih():
@@ -226,21 +272,32 @@ class sorgu():
             self.sorgu = "C:/Users/ITStaj/Desktop/datasupervisor/Datas/2019-02-07"
             self.penc.destroy()
             self.search()
+        def cikis():
+            self.iptal = True
+            self.gunluk = False
+            self.penc.destroy()
+            os.chdir(self.defaultpath)
+            
         Button(self.penc,text = "Tarih ile arama ",command = tarih).pack()
         Button(self.penc,text = "Dosya Bul",command = askdir).pack()
-        Button(self.penc,text = " DENEME",command = immediate).pack()
+        Button(self.penc,text = " DENEME ",command = immediate).pack()
+        Button(self.penc,text = " MENÜYE DÖN ",command = cikis).pack()
 
         self.penc.mainloop()
                 
-    def search(self,):
+    def search(self,again = None):
+        self.iptal = False
         try:
             os.chdir("Datas")
         except:
             pass
+        
         try:
-            os.chdir(self.sorgu)
+            #os.chdir(self.sorgu)
+            pass
         except:
             #messagebox("HATA !", "Tarihi yanlis girdiniz ve ya o tarih de dosya bulunmamakta,tekrar deneyin. ")
+            print(os.getcwd())
             print("hatali")
             self.gui()
             return None
@@ -249,24 +306,69 @@ class sorgu():
         self.dosyalar = os.listdir()
         self.files = []
         self.cout = 0
+        print("*"*52)
         print("Arama başlatılıyor..")
         time.sleep(0.5)
-        for i in self.dosyalar:
+        try:
+         for i in self.dosyalar:
             self.check(i)
             if self.flag:
                 self.cout +=1
                 self.files.append(i)
-                self.dosyaid = i[20:26]
-                self.dosyah = i[33:39][0:2]
-                self.dosyamin = i[33:39][2:4]
-                self.dosyas = i[33:39][4:6]
+                self.dosyaid = i[-24:-18]
+                self.dosyah = i[-11:-9]
+                self.dosyamin = i[-9:-7]
+                self.dosyas = i[-7:-5]
                 self.dosyadate = self.dosyah + ":" + self.dosyamin + ":" + self.dosyas
                 self.dosyainfo  =  "Dosya No : " + str(self.cout) + "  Saat : "+self.dosyah +":"+self.dosyamin+":"+self.dosyas
-                print(self.dosyainfo,"\n")
-        self.secim = int(input("Hangi dosyayi istiyorsunuz ?\n"))
-        self.dosya = self.files[self.secim-1]
+                if again != True:
+                    print(self.dosyainfo,"\n")
+         while 1:
+            self.secim = input("Hangi dosyayi istiyorsunuz ?\n\n(Tümünü görmek için 'a' giriniz.)\n(Çıkmak için CTRL+C 'ye basın)\n")
+            if self.secim == "a" or len(self.files)>= int(self.secim) > 0:
+                break
+            else :
+                print("\n\n\n HATALI GİRDİNİZ. TEKRAR DENEYİN ! \n\n ")
+        except KeyboardInterrupt:
+            return
+        if self.secim == "a":
+            self.iptal = True
+            self.gunluk = True
+            pass
+        else:
+            self.gunluk = False
+            self.dosya = self.files[int(self.secim)-1]
         os.chdir(self.defaultpath)
-        
+    def errorfile(name,path):
+        global check
+        try:
+            os.chdir("Datas")
+        except:
+            os.chdir("..")
+            try :
+                os.chdir("Datas")
+            except:
+                os.chdir("..")
+                os.chdir("Datas")
+        os.chdir(path)
+        dosyalar = os.listdir()
+        for i in dosyalar:            
+             if name == i[-17:-7]:
+                    dosya = i
+                    return dosya
+    def ayir(name,i = None):
+           dosyaid = name[-24:-18]
+           dosyah = name[-11:-9]
+           dosyamin = name[-9:-7]
+           dosyas = name[-7:-5]
+           dosyadate = dosyah + ":" + dosyamin + ":" + dosyas
+           if i == None:
+               dosyainfo  =dosyah+"-"+dosyamin+"-"+dosyas
+               return dosyainfo
+           else :
+               dosyainfo  =  "Dosya No : " + str(i+1) + "  Saat : "+dosyah +":"+dosyamin+":"+dosyas
+               return dosyainfo
+                   
     def check(self,x):
         c = 0
         b = list(x)
@@ -287,12 +389,4 @@ class sorgu():
             if c == 3 and vflag and sflag and cflag:
                 self.flag = True
                 break
-    
-
-        
-
-#yenisorgu = sorgu()
-
-#yeni = dosya_aktar(yenisorgu.dosya,yenisorgu.dosya_yolu)
-
-
+        return self.flag
