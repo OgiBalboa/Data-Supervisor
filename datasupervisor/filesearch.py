@@ -7,6 +7,7 @@ class dosyabul():
 
         self.fileflag = None
         self.filename = ""
+        self.search_again = None
         try: 
             os.chdir ( "Datas")
         except:
@@ -38,26 +39,37 @@ class dosyabul():
                 self.findfile()
         
             if self.fileflag == True :      
-                self.filename = self.tempname    
-                
-                
+                self.filename = self.tempname
+                  
                 break
+        if self.fileflag == True :
+            self.filename = self.tempname
 
     def findfile(self,):
         dosya = os.listdir()
         self.tempname = ''.join(map(str,self.current_date)) #GEÇİCİ OLARAK TARİHİ DOSYA ADINA ÇEVİRİR
         for i in dosya:
-            if i == self.tempname:
-                self.fileflag = True
+            if i == self.tempname and len(i) == 10:
+                self.fileflag = True   
             else :
                 self.fileflag = False
     def detect_new(self,path):
         os.chdir(path)
         self.filecount = os.listdir()
         self.temp_file_count = self.filecount
+        self.reftime = int(str(datetime.now())[11:13] + str(datetime.now())[14:16])
+        self.iptal = False
         while 1:
             self.filecount = os.listdir()
             if len(self.filecount) > len(self.temp_file_count):
                 self.data_name = self.filecount[-1]
                 self.data_path = os.getcwd()
                 break
+            self.check_time(self.reftime)
+            if self.search_again == True:
+                break
+    def check_time(self,reftime):
+        self.current_time = int(str(datetime.now())[11:13] + str(datetime.now())[14:16]) 
+        if self.current_time - reftime > 1:
+            print("1 dakikadır veri gelmedi yeni dosya aranıyor...")
+            self.iptal = True 

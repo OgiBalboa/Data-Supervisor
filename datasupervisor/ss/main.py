@@ -1,11 +1,9 @@
-#--------------------------------------------
-# Name:         Data Supervisor Main Menu
-# Author :      ogulcan@AISIN
-# Date :        13.12.2019
-# Licence :     <GNU GCC>
-#--------------------------------------------
+"""
+Data finder MENU
+author = @ogibalboa
+"""
 print("\n"*50)
-from threading import Thread  
+from threading import Thread
 from tkinter import *
 print("Yükleniyor...")
 import time
@@ -28,18 +26,6 @@ from settings import settings
 settings = settings()
 #-------------------------------MAKİNE İLE PARALEL ÇALIŞMA-----------------------
 global sttw
-def parallel():
-    global paralel_stop
-    while 1:
-            if paralel_stop != True:
-                paralel(anayol)
-            else:
-                line(52)
-                print("Taranan veri sayısı : " + str(veri_count))
-                print("Hatalı veri sayısı : " + str(hata_count))
-                input("\n\nDevam etmek için Enter'a basınız.")
-                os.chdir(anayol)
-                return Menu()    
 def paralel(path):
     global veri_count
     global hata_count
@@ -51,13 +37,13 @@ def paralel(path):
     if son_dosya_adi != file.filename:
         son_dosya_adi = file.filename
         print("\nTarama yapılan dosya tarihi : " + str(file.filename))
-    Label(sttw,text = "Tarama yapılan dosya tarihi : " + str(file.filename),font=("Arial",12)).place(x=0,y=70)
+        Label(sttw,text = "Tarama yapılan dosya tarihi : " + str(file.filename),font=("Arial",12)).place(x=0,y=70)
     file.detect_new(file.filename)
     if file.iptal == True:
         return run(again = True)
     file.fileflag = None
     while 1:
-        if file.data_name[-4::] == ".csv":
+        if len(file.data_name) > 1 :
                 analiz = verianaliz.dosya_aktar(file.data_name,file.data_path,True)
                 file = None
                 veri_count+=1
@@ -65,21 +51,22 @@ def paralel(path):
                     hata_count+= 1
                 print("\nTaranan veri sayısı : " + str(veri_count))
                 print("Hatalı veri sayısı : " + str(hata_count))
-                Label(sttw,text = "\nHatalı Veri Sayısı : " + str(hata_count),font=("Arial",12)).place(x=0,y=180)
                 Label(sttw,text = "\nTaranan veri sayısı : " + str(veri_count),font=("Arial",12)).place(x=0,y=120)
                 break
         else :
             file.findate()
+def status():
+    global sttw
+    sttw = Tk()
+    sttw.geometry("400x400")
+    Label(sttw,text = "Tarama Başlama Tarihi : "+ str(datetime.now())[0:16],font=("Arial",12)).place(x=0,y=10)
+    sttw.mainloop()
+
 def run(again = None):
     global veri_count
     global hata_count
     global anayol
     global sttw
-    global paralel_stop
-    paralel_stop = None
-    def stop():
-        sttw.destroy()
-        paralel_stop = True
     if again != True:
         veri_count = 0
         hata_count = 0
@@ -88,21 +75,22 @@ def run(again = None):
         print("\n\nVeriler Taranıyor")
         print("Tarama Başlama Tarihi : "+ str(datetime.now())[0:16])
         print("(Çıkmak için CTRL + C ye basınız...)")
-        global sttw
-        sttw = Tk()
-        sttw.title("TARAMA BAŞLADI")
-        sttw.geometry("400x400")
-        Label(sttw,text = "Tarama Başlama Tarihi : "+ str(datetime.now())[0:16],font=("Arial",12)).place(x=0,y=10)
-        Label(sttw,text = "\nTaranan Veri sayısı : " + str(veri_count),font=("Arial",12)).place(x=0,y=120)
-        Label(sttw,text = "\nHatalı Veri Sayısı : " + str(hata_count),font=("Arial",12)).place(x=0,y=180)
-        Button(sttw,text = "TARAMAYI DURDUR ",font=("Arial",12),command = stop).place(x=50,y=300)
-        durum = Thread(target = parallel)
-        durum.daemon = True
+        durum = Thread(target = status)
         durum.start()
-    sttw.mainloop()
+        durum.join()
+    while 1:
+            try :
+                paralel(anayol)
+            except KeyboardInterrupt :
+                line(52)
+                print("Taranan veri sayısı : " + str(veri_count))
+                print("Hatalı veri sayısı : " + str(hata_count))
+                input("\n\nDevam etmek için Enter'a basınız.")
+                os.chdir(anayol)
+                return Menu()
+    #stw.mainloop()
     os.chdir(anayol)
     return Menu()
-
 vericount = 0
 hatacount = 0
 #------------------------------ DOSYA SORGULAMA ------------------------------------
