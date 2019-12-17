@@ -34,7 +34,7 @@ class analiz():
         self.curtime1 = 0
         self.peakcount2 = 0
         self.curtime2 = 0
-        self.peaklist1= [] # sonpeak =  peaklist[-1] - peaklist[-2]
+        self.peaklist1= [] 
         self.peaklist2= []
         self.aramaflag = flag
         self.isim = isim
@@ -173,11 +173,11 @@ class analiz():
 #-------------------------------PEAK BULMA-------------------------------------------------------     
     def peakdetect(self,i):
         
-        if  len(self.peaklist1) <  1 and float(self.anglelist1[-1]) > settings.first_peak_value and float(self.sensor1[i])> 2: #Settings'den alınan veriye göre peak denetlenir.   
+        if  len(self.peaklist1) <  1 and float(self.anglelist1[-1]) > settings.first_peak_value and float(self.sensor1[i+1])> 2: #Settings'den alınan veriye göre peak denetlenir.   
             self.peak1()
         elif len(self.peaklist1)  >= 1 and float(self.anglelist1[-1]) > settings.last_peak_value :
             self.peak1()
-        if   len(self.peaklist2)  < 1 and float(self.anglelist2[-1]) > settings.first_peak_value and float(self.sensor2[i])> 2 :
+        if   len(self.peaklist2)  < 1 and float(self.anglelist2[-1]) > settings.first_peak_value and float(self.sensor2[i+1])> 2 :
             self.peak2()
         elif len(self.peaklist2)  >= 1 and float(self.anglelist2[-1]) > settings.last_peak_value :    
             self.peak2()

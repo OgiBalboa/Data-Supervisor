@@ -198,6 +198,8 @@ def sorgula(again = None):
                     for i in errorlist:
                         print(verianaliz.sorgu.ayir(verino.files[i],i),"\n")
                 input("Devam Etmek için Enter'a basınız...")
+                hatacount = 0
+                vericount = 0
                 return hata_ekrani()
     except Exception as e:
         print(e)
@@ -248,6 +250,7 @@ def errorlog():
             global errorwindow
             errorwindow = Tk()
             errorwindow.title("Error Log")
+            errorwindow.geometry("300x300")
             try:
                 errorwindow.iconbitmap("bin/icon.ico")
             except:
