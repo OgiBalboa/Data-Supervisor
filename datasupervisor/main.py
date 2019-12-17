@@ -7,6 +7,7 @@
 print("\n"*50)
 from threading import Thread  
 from tkinter import *
+from tkinter import filedialog
 print("Yükleniyor...")
 import time
 from time import sleep
@@ -26,9 +27,9 @@ global son_dosya_adi
 son_dosya_adi = ""
 from settings import settings
 settings = settings()
-#-------------------------------MAKİNE İLE PARALEL ÇALIŞMA-----------------------
-global sttw
-def parallel():
+#-------------------------------MAKİNE İLE PARALEL ÇALIŞMA--------------------------------------------
+global sttw # Status window için global değişken
+def parallel():   # Makine ile paralel çalışmayı sonsuz döngüye sokabilmek için ana programdan ayrılması gerekmekte. Bunun için threading kullanıldı.
     global paralel_stop
     while 1:
             if paralel_stop != True:
@@ -47,24 +48,25 @@ def paralel(path):
     global sttw
     os.chdir(path)
     file = filesearch.dosyabul()
-    file.findate()
+    if file.current_date(str(datetime.now())[0:10]) is True : # FILE SEARCH : dosya adı bulmak için
+        file.filename = str(datetime.now())[0:10]
+    else :
+        file.findate()
     if son_dosya_adi != file.filename:
         son_dosya_adi = file.filename
         print("\nTarama yapılan dosya tarihi : " + str(file.filename))
     Label(sttw,text = "Tarama yapılan dosya tarihi : " + str(file.filename),font=("Arial",12)).place(x=0,y=70)
-    file.detect_new(file.filename)
+    file.detect_new(file.filename) # Yeni veri bulmak için
     if file.iptal == True:
         return run(again = True)
     file.fileflag = None
     while 1:
         if file.data_name[-4::] == ".csv":
-                analiz = verianaliz.dosya_aktar(file.data_name,file.data_path,True)
+                analiz = verianaliz.analiz(file.data_name,file.data_path,flag = True)
                 file = None
                 veri_count+=1
                 if analiz.errorflag == True:
                     hata_count+= 1
-                print("\nTaranan veri sayısı : " + str(veri_count))
-                print("Hatalı veri sayısı : " + str(hata_count))
                 Label(sttw,text = "\nHatalı Veri Sayısı : " + str(hata_count),font=("Arial",12)).place(x=0,y=180)
                 Label(sttw,text = "\nTaranan veri sayısı : " + str(veri_count),font=("Arial",12)).place(x=0,y=120)
                 break
@@ -92,6 +94,10 @@ def run(again = None):
         sttw = Tk()
         sttw.title("TARAMA BAŞLADI")
         sttw.geometry("400x400")
+        try:
+            sttw.iconbitmap("bin/icon.ico")
+        except:
+            pass
         Label(sttw,text = "Tarama Başlama Tarihi : "+ str(datetime.now())[0:16],font=("Arial",12)).place(x=0,y=10)
         Label(sttw,text = "\nTaranan Veri sayısı : " + str(veri_count),font=("Arial",12)).place(x=0,y=120)
         Label(sttw,text = "\nHatalı Veri Sayısı : " + str(hata_count),font=("Arial",12)).place(x=0,y=180)
@@ -103,7 +109,7 @@ def run(again = None):
     os.chdir(anayol)
     return Menu()
 
-vericount = 0
+vericount = 0 # Paralel çalışma sırasında verileri ve hataları sayacak olan değişken.
 hatacount = 0
 #------------------------------ DOSYA SORGULAMA ------------------------------------
 def hata_ekrani():
@@ -114,7 +120,7 @@ def hata_ekrani():
         filename = verino.sorgu[-10::]
         for i in errorlist:
            data_name = verianaliz.sorgu.ayir(verino.files[i])+".txt"
-           error = verianaliz.dosya_aktar(verino.files[i],filename,noprint = True,flag=False)
+           error = verianaliz.analiz(verino.files[i],filename,noprint = True,flag=False)
            recov = os.getcwd()
            os.chdir(dosyayolu)
            os.chdir("Errors")
@@ -125,27 +131,33 @@ def hata_ekrani():
                pass
            os.chdir(filename)
            fl = open(data_name,"a+")
-           errorfilename = "Orijinal Dosya Adı : " + verino.files[i] +"\n"
+           errorfilename = "\nOrijinal Dosya Adı : " + verino.files[i] +"\n"
            fl.write(errorfilename)
-           fl.write(error.inf)
+           fl.write(error.info)
            fl.write(error.error_info)
            fl.close()
            os.chdir(recov)
         os.chdir(dosyayolu)
         hata_gui.destroy()
         return Menu()
-    def select():
-        pass
-    def show_errors():
-        pass
-    def cikis():
+    def again():
         hata_gui.destroy()
+        again = True
+        return sorgula(True)
+    def cikis():  # ÇIKIŞ
+        hata_gui.destroy()
+        os.chdir(dosyayolu)        
+        return Menu()
     hata_gui = Tk()
     hata_gui.title("Sorgu Hataları")
+    hata_gui.geometry("200x200")
+    try:
+        hata_gui.iconbitmap("bin/icon.ico")
+    except:
+        pass
+    Button(hata_gui,text = " Aynı dosyadan başka sorgu ",command = again).pack()
     Button(hata_gui,text = "Hatalı dosya bilgilerini dışa aktar",command = export_error).pack()      
-    #Button(hata_gui,text = "Hatayı detaylı görüntülemek için dosya seç",command = select).pack()
-    #Button(hata_gui,text = "Tüm Dosyaları Sırayla Göster",command = show_errors).pack()
-    Button(hata_gui,text = "ANA MENU",command = cikis).pack()      
+    Button(hata_gui,text = "ANA MENU",command = cikis).pack()
   
 def sorgula(again = None):
     global errorlist
@@ -163,41 +175,49 @@ def sorgula(again = None):
         pass
     else :
         verino = verianaliz.sorgu()  # DEĞİLSE YENİ SORGU OLUŞTUR
-    if verino.gunluk == True:  # 1 GÜNDEKİ TÜM DOSYALARI TARATMAK İÇİN
-        print("Gün içinde bulunan tüm veriler taranıyor....\n")
-        for veriler in range (0,len(verino.files)):
-            vericount+=1
-            gunluk_analiz = verianaliz.dosya_aktar(verino.files[veriler],verino.dosya_yolu,flag = False,noprint = True)
-            if gunluk_analiz.errorflag == True:
-                errorlist.append(veriler)
-                print("HATALI VERİ ADI  :  ",end = '')
-                print(verianaliz.sorgu.ayir(verino.files[veriler],veriler),"\n")
-                print(gunluk_analiz.inf)
-                hatacount+=1  
-                line(52)   
-                print("\n")
-        verino.gunluk = False
-        print("\nTaranan veri sayısı : " + str(len(verino.files)) + "\nHatalı veri sayısı : " + str(hatacount))
-        if hatacount >0:
-            print("\n\nHatalı Dosyalar :\n\n" )
-            for i in errorlist:
-                print(verianaliz.sorgu.ayir(verino.files[i],i),"\n")
-        input("Devam Etmek için Enter'a basınız...")
-        return hata_ekrani()
-           #print(verino.files[i],end = '')
+
+    try:
+        if verino.gunluk == True:  # 1 GÜNDEKİ TÜM DOSYALARI TARATMAK İÇİN
+                print("Gün içinde bulunan tüm veriler taranıyor....\n")
+                for veriler in range (0,len(verino.files)):
+                    vericount+=1
+                    gunluk_analiz = verianaliz.analiz(verino.files[veriler],verino.dosya_yolu,flag = False,noprint = True)
+                    if gunluk_analiz.errorflag == True:
+                        errorlist.append(veriler)
+                        print("HATALI VERİ ADI  :  ",end = '')
+                        print(verianaliz.sorgu.ayir(verino.files[veriler],veriler),"\n")
+                        print(gunluk_analiz.info)
+                        hatacount+=1  
+                        line(52)   
+                        print("\n")
+                    print(vericount,"/",len(verino.files))
+                verino.gunluk = False
+                print("\nTaranan veri sayısı : " + str(len(verino.files)) + "\nHatalı veri sayısı : " + str(hatacount))
+                if hatacount >0:
+                    print("\n\nHatalı Dosyalar :\n\n" )
+                    for i in errorlist:
+                        print(verianaliz.sorgu.ayir(verino.files[i],i),"\n")
+                input("Devam Etmek için Enter'a basınız...")
+                return hata_ekrani()
+    except Exception as e:
+        print(e)
+    #input("Devam Etmek için Enter'a basınız")
     if verino.iptal == False:   # SORGU BİLGİLERİ İSTENİYOR MU ?
-        analiz = verianaliz.dosya_aktar(verino.dosya,verino.dosya_yolu)
-        print(analiz.inf)
+        analiz = verianaliz.analiz(verino.dosya,verino.dosya_yolu)
+        print(analiz.info)
         try:
             input('Grafiği görmek için Enterla \n Çıkmak için CTRL+C ...') 
             analiz.plot()
+            input('Grafiği görmek için Enterla \n Çıkmak için CTRL+C ...')
+            return hata_ekrani()
         except KeyboardInterrupt:
             pass
         print("Sorgu tamamlandı.\n")
         line(52)
     else :
         pass
-    
+    return Menu()
+def sorgu_sonrasi():    
     window = Tk()  # SORGU SONRASI PENCERE
     window.title("Sorgu Sonrası")
     def again():
@@ -214,10 +234,12 @@ def sorgula(again = None):
     window.mainloop()
 #-------------------------------ERROR LOGLARI-----------------------------------------
 def errorlog():
+        """
         try:
             menu.destroy()
         except:
             pass
+        """
         try:
             window.destroy()
         except:
@@ -226,6 +248,10 @@ def errorlog():
             global errorwindow
             errorwindow = Tk()
             errorwindow.title("Error Log")
+            try:
+                errorwindow.iconbitmap("bin/icon.ico")
+            except:
+                pass
         erwindow()
         def after():
             Button(errorwindow,text = " Hataları Tekrar Görüntüle ", command = again).pack()
@@ -258,6 +284,13 @@ def errorlog():
                 goruntule = int(input("(Çıkmak için CTRL+C'ye basınız)\nGörüntülemek istediğiniz dosya No  : "))
             except KeyboardInterrupt:
                 os.chdir(dosyayolu)
+                menu.destroy()
+                return Menu()
+            except Exception as e:
+                hata = "Hatalı veri girdiniz. \nHata adı : " +str(e)
+                messagebox.showerror("HATA !",hata)
+                os.chdir(dosyayolu)
+                menu.destroy()
                 return Menu()
             dosya = open(hatalar[goruntule - 1],'r')
             print(dosya.read())
@@ -281,7 +314,16 @@ def errorlog():
             os.chdir("Manual")
             initial = os.getcwd()
             tarih = filedialog.askdirectory(initialdir =initial ,title = "Dosya Tarihi Seçiniz",)
-            os.chdir(tarih)
+            try:
+                os.chdir(tarih)
+                menu.destroy()
+            except:
+                messagebox.showerror("HATA ! "," Tarih Seçmediniz !")
+                try:
+                    menu.destroy()
+                except:
+                    pass
+                return Menu()
             hatalar = os.listdir()
             cout = 0
             print("\nError Logları : \n")
@@ -306,21 +348,20 @@ def errorlog():
                 name = hatalar[goruntule-1][2:4]+hatalar[goruntule-1][5:7]+hatalar[goruntule-1][8:10]+hatalar[goruntule-1][11:13]+hatalar[goruntule-1][14:16]
                 
                 os.chdir(dosyayolu)
-                error_analiz = verianaliz.sorgu.errorfile(name,hatalar[goruntule-1][0:10])
+                error_analiz = verianaliz.sorgu.go_to_date(name,hatalar[goruntule-1][0:10])
                 print(name,hatalar[goruntule-1])
             else:
                 
                 name = tarih[-8:-6]+tarih[-5:-3]+tarih[-2::]+hatalar[goruntule-1][0:2]+ hatalar[goruntule-1][3:5]
-                print(name)
-                print(tarih[-10:])
                 os.chdir(dosyayolu)
-                error_analiz = verianaliz.sorgu.errorfile(name,tarih[-10:])
+                error_analiz = verianaliz.sorgu.go_to_date(name,tarih[-10:])
             if error_analiz == None :
                 print("\n\nHATA ! DOSYA KAYIP ! ")
-                input("\nDevam Etmek için Enter'a basınız...")
+                menu.destroy()
+                return Menu()
             else:
-                    analiz = verianaliz.dosya_aktar(str(error_analiz),hatalar[goruntule-1][0:10])
-                    print(analiz.inf)
+                    analiz = verianaliz.analiz(str(error_analiz),hatalar[goruntule-1][0:10])
+                    print(analiz.info)
                     input('Grafiği görmek için Enterla')
                     analiz.plot()
                     print("Sorgu tamamlandı.\n")
@@ -342,8 +383,12 @@ def errorlog():
 def Menu():
     global menu
     menu = Tk()
-    menu.title("MENU")
-    menu.geometry("400x400")        
+    menu.title("Trend Tracker")
+    menu.geometry("400x400")
+    try:
+        menu.iconbitmap("bin/icon.ico")
+    except:
+        pass
     Label (menu,text = "Ne Yapmak İstiyorsunuz ?",font=("Arial",14)).pack()
     Button(menu,text = "Makine ile Paralel Çalışma",font=("Arial",12),command = run).pack()
     Button(menu,text = "Makine Verileri Sorgula",font = ("Arial",12),command = sorgula).pack()

@@ -6,38 +6,35 @@
 #--------------------------------------------
 import os
 class settings():
-    def __init__(self,): # DEFAULT AYARLAR
-        self.source_count = 2 # KAYNAK SAYISI
-        self.first_peak_value = 14.5 # İLK PEAK İÇİN MİN DEĞER
-        self.last_peak_value = 75 # SON PEAK İÇİN MİN DEĞER
-        self.min_enj_time = 5 # ENJEKSİYON SÜRESİ
-        self.max_pressure = 20 # MAX BASINÇ
-        self.default_peak_count = 2 # DEFAULT PAEK SAYISI
-        self.default_path = os.getcwd()
-        self.wait_for_data = 1 #Verinin oluşması için bekleme süresi
-        self.min_angle = 14.5
-        self.amp = 20 # Açı hesaplamada zaman verisini genişletme değeri
+    def __init__(self,): 
+        self.first_peak_value = 10          # İLK PEAK İÇİN MİN DEĞER ( Default = 14 degrees)
 
+        self.last_peak_value = 20           # SON PEAK İÇİN MİN DEĞER ( Default = 20 degrees)
+
+        self.min_enj_time = 5               # ENJEKSİYON SÜRESİ ( Default = 5 sec)
+
+        self.max_pressure = 20              # MAX BASINÇ ( Default = 20 MPa)
+
+        self.wait_for_data = 38             #Verinin oluşması için bekleme süresi (Default = 38 sec)
+
+        self.min_angle = 10                 # ( Default = 10 degrees)
+
+        self.max_angle = 20                 # Doğrultalacak olan veri için aralık belirtilir. ( Default = 20)
+
+        self.amp = 20                       # 3000 ve aşağı sayıdaki veriler için genlik değeri ( Default = 20)
+
+#------------------------------EK AYARLAR-------------------------------------
+        self.wait_for_next_peak = 1         # Peak bulduktan sonra bekleme süresi(default = 1)
+
+        self.amp1 = 100                     # 3000 den fazla veri sayısı için genlik değeri ( Default = 100)
+
+        self.jump = 20                      # düzensiz veriler için atlanacak süre miktarı
+                                            #( Default = 20 *t. t, birim zamandır. veri sayısına göre değişir.)
+
+        self.sample_range_start = 3        #Doğrultma için alınan örneğin başlama zamanı (30sn/veri sayısı)* range_start (Default :  1500 veri için 30. -0.06 . saniye-)
+
+        self.sample_range_stop = 101        # Doğrultma bitiş zamanı ( Default : 1500 veri için 101 -2. saniye-)
         
-    def gotofile(self,filename):  # PROGRAMIN DOSYALAR ARASINDA DOLAŞMASI İÇİN FONKSİYON
-        os.chdir(os.getcwd)
-        if filename == Datas:
-            try:
-                os.chdir("Datas")
-                self.path = os.getcwd()
-            except Exception as e: #BU KOD SAYESİNDE HATA ALIRSA PROGRAM DURMAZ.
-                print("HATA ! : ",e)
-        if filename == Errors:
-            try:
-                os.chdir("Errors")
-                self.path = os.getcwd()
-            except Exception as e:
-                print("HATA ! : ",e)
-        if filename == Manual:
-            try:
-                os.chdir("Errors")
-                os.chdir("Manual")
-                self.path = os.getcwd()
-            except Exception as e:
-                print("HATA ! : ",e)        
+        self.default_path = os.getcwd()     #Programın varsayılan çalışma dosyası.
 
+        self.default_peak_count = 2         # Minimum peak sayısı

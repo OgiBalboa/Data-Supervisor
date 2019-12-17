@@ -1,7 +1,7 @@
 import os
 import sys
 import time
-from datetime import datetime
+from datetime import datetime, date
 class dosyabul():
     def __init__(self,):
 
@@ -13,6 +13,11 @@ class dosyabul():
         except:
             pass
         self.data_name = None
+    def current_date(self,date):
+        for i in os.listdir():
+            if i == date:
+                return True
+        return False
     def findate(self,):
         self.current_date = list(str(datetime.now())[0:10]) 
         self.findfile()
@@ -57,7 +62,7 @@ class dosyabul():
         os.chdir(path)
         self.filecount = os.listdir()
         self.temp_file_count = self.filecount
-        self.reftime = int(str(datetime.now())[11:13] + str(datetime.now())[14:16])
+        self.reftime = str(datetime.now())
         self.iptal = False
         while 1:
             self.filecount = os.listdir()
@@ -69,7 +74,10 @@ class dosyabul():
             if self.search_again == True:
                 break
     def check_time(self,reftime):
-        self.current_time = int(str(datetime.now())[11:13] + str(datetime.now())[14:16]) 
-        if self.current_time - reftime > 1:
-            print("1 dakikadır veri gelmedi yeni dosya aranıyor...")
+        d0 = date(int(self.reftime[0:4]),int(self.reftime[5:7]) , int(self.reftime[8:10]))
+        d1 = date(int(str(datetime.now())[0:4]),int(str(datetime.now())[5:7]) , int(str(datetime.now())[8:10]))
+        delta = d1 - d0
+        if delta.days >= 1:
+            print("Yeni tarihe geçiliyor.")
             self.iptal = True 
+
