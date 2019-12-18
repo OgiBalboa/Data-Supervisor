@@ -69,7 +69,6 @@ class analiz():
             try :
                 self.denetle() #ALINAN VERİLERİ İNCELE
             except Exception as e:
-                print(e)
                 pass
 #-------------------------------PEAK SAYI HATALARI-------------------------------------------------------  
             """
@@ -107,9 +106,17 @@ class analiz():
             except:
                 self.info +="\nSensör 2'de peak bulunamadı\n"              
             self.veri_sayisi = self.vericount-8
+#-------------------------------ANALİZ SONRASI SON İŞLEMLER-------------------------------------------------------   
             if self.aramaflag == True and self.errorflag == True:
                 self.hatakayit()
-            os.chdir(self.defaultpath) # ANA DOSYA YOLUNA GERİ DÖN 
+            os.chdir(self.defaultpath) # ANA DOSYA YOLUNA GERİ DÖN
+            
+            if self.noprint != True:
+                print(self.info)
+                if self.aramaflag != True and self.errorflag == True:
+                    print("\n"*3)
+                    print(self.error_info)
+                    print("*" * 50)
             file.close()
     def veriayir(self,):
             self.a = self.r[0].split(',')   # SURE VERİSİNİ AYIRIR
@@ -158,9 +165,7 @@ class analiz():
             for i in range (0,len(self.surelist)):
                 if int(float(self.surelist[i])) < self.peaklist1[-1]*1000:
                     self.basinchatadetect(i)
-            if self.noprint != True and self.aramaflag !=True and self.errorflag == True:
-                print(self.error_info)
-                print("*" * 50)
+    
             
     def mean(self,liste): #ALINAN ÖRNEKLEMİN ORTALAMA DEĞERİNİ HESAPLAR
         toplam = 0
@@ -173,11 +178,11 @@ class analiz():
 #-------------------------------PEAK BULMA-------------------------------------------------------     
     def peakdetect(self,i):
         
-        if  len(self.peaklist1) <  1 and float(self.anglelist1[-1]) > settings.first_peak_value and float(self.sensor1[i+1])> 2: #Settings'den alınan veriye göre peak denetlenir.   
+        if  len(self.peaklist1) <  1 and float(self.anglelist1[-1]) > settings.first_peak_value and float(self.sensor1[i+10])> 2: #Settings'den alınan veriye göre peak denetlenir.   
             self.peak1()
         elif len(self.peaklist1)  >= 1 and float(self.anglelist1[-1]) > settings.last_peak_value :
             self.peak1()
-        if   len(self.peaklist2)  < 1 and float(self.anglelist2[-1]) > settings.first_peak_value and float(self.sensor2[i+1])> 2 :
+        if   len(self.peaklist2)  < 1 and float(self.anglelist2[-1]) > settings.first_peak_value and float(self.sensor2[i+10])> 2 :
             self.peak2()
         elif len(self.peaklist2)  >= 1 and float(self.anglelist2[-1]) > settings.last_peak_value :    
             self.peak2()
@@ -268,22 +273,23 @@ class analiz():
                 tan = y/x
                 self.aci = math.degrees(math.atan(tan))
 #-------------------------------GRAFİK ÇİZDİRME-------------------------------------------------------                         
-    def plot (self,):  
+    def plot (self,):
             def draw(name,ccolor,title,xlabel,ylabel,axisx,axisy):
                 name.plot(axisx,axisy,color = ccolor)
                 name.set_title(title)
                 name.set_xlabel(xlabel)
-                name.set_ylabel(ylabel)
-                
+                name.set_ylabel(ylabel)   
             fig,(sub1,sub3) = plt.subplots(2)
             fig,(sub2,sub4) = plt.subplots(2)
-            #fig = plt.figure()
+            plt.axes([0, 0.5, 0, 1500])
+            #plt.figure()
             #sub = fig.add_subplot(111)
             draw(sub1,"darkred","SENSÖR 1","Süre(ms)","Basınç(MPa)",self.surelist,self.sensor1)
             draw(sub2,'darkred',"SENSÖR 2","Süre(ms)","Basınç(MPa)",self.surelist,self.sensor2)
             draw(sub3,'lightblue',"SENSRÖR 1 AÇILAR", "Süre (s)"," Açı (Derece)",self.surelist,self.anglelist1)
             draw(sub4,'lightblue',"SENSRÖR 2 AÇILAR", "Süre (s)"," Açı (Derece)",self.surelist,self.anglelist2)
-            plt.show()       
+            plt.show()
+         
 #-------------------------------DOSYALARI BULMA MODÜLÜ-------------------------------------------------------      
 class sorgu():
     def __init__(self,):
@@ -294,7 +300,7 @@ class sorgu():
     def gui(self,):
         self.penc = Tk()
         self.penc.title("Veri Analiz")
-        self.penc.geometry("500x500")
+        self.penc.geometry("450x300")
         try:
             self.penc.iconbitmap("bin/icon.ico")
         except:
@@ -323,7 +329,7 @@ class sorgu():
             check()
             self.search()
         def immediate():
-            self.sorgu = "C:/Users/ITStaj/Desktop/datasupervisor/Datas/2019-02-07"
+            self.sorgu = "C:/Users/ITStaj/Desktop/datasupervisor/Datas/2019-12-09"
             self.penc.destroy()
             self.search()
         def cikis():
@@ -332,10 +338,10 @@ class sorgu():
             self.penc.destroy()
             os.chdir(self.defaultpath)
             
-        Button(self.penc,text = "Tarih ile arama ",command = tarih).pack()
-        Button(self.penc,text = "Dosya Bul",command = askdir).pack()
-        Button(self.penc,text = " DENEME ",command = immediate).pack()
-        Button(self.penc,text = " MENÜYE DÖN ",command = cikis).pack()
+        Button(self.penc,text = "Tarih ile arama ",command = tarih).place(x = 60, y = 20)
+        Button(self.penc,text = "Dosya Bul",command = askdir).place(x = 180, y = 20)
+        Button(self.penc,text = " DENEME ",command = immediate).place(x = 300, y = 20)
+        Button(self.penc,text = " MENÜYE DÖN ",command = cikis).place(x = 160, y = 120)
 
         self.penc.mainloop()
                 

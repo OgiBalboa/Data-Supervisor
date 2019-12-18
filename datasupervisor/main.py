@@ -55,7 +55,7 @@ def paralel(path):
     if son_dosya_adi != file.filename:
         son_dosya_adi = file.filename
         print("\nTarama yapılan dosya tarihi : " + str(file.filename))
-    Label(sttw,text = "Tarama yapılan dosya tarihi : " + str(file.filename),font=("Arial",12)).place(x=0,y=70)
+    Label(sttw,text = "Tarama yapılan dosya tarihi : " + str(file.filename),fg= "white",bg = "#094BFC",font=("Arial",12)).place(x=0,y=70)
     file.detect_new(file.filename) # Yeni veri bulmak için
     if file.iptal == True:
         return run(again = True)
@@ -67,8 +67,8 @@ def paralel(path):
                 veri_count+=1
                 if analiz.errorflag == True:
                     hata_count+= 1
-                Label(sttw,text = "\nHatalı Veri Sayısı : " + str(hata_count),font=("Arial",12)).place(x=0,y=180)
-                Label(sttw,text = "\nTaranan veri sayısı : " + str(veri_count),font=("Arial",12)).place(x=0,y=120)
+                Label(sttw,text = "\nHatalı Veri Sayısı : " + str(hata_count),fg= "white",bg = "#094BFC",font=("Arial",12)).place(x=0,y=180)
+                Label(sttw,text = "\nTaranan veri sayısı : " + str(veri_count),fg= "white",bg = "#094BFC",font=("Arial",12)).place(x=0,y=120)
                 break
         else :
             file.findate()
@@ -85,7 +85,10 @@ def run(again = None):
     if again != True:
         veri_count = 0
         hata_count = 0
-        menu.destroy()
+        try:
+            menu.destroy()
+        except:
+            pass
         anayol = os.getcwd()
         print("\n\nVeriler Taranıyor")
         print("Tarama Başlama Tarihi : "+ str(datetime.now())[0:16])
@@ -94,14 +97,15 @@ def run(again = None):
         sttw = Tk()
         sttw.title("TARAMA BAŞLADI")
         sttw.geometry("400x400")
+        sttw.configure(bg = "#094BFC")
         try:
             sttw.iconbitmap("bin/icon.ico")
         except:
             pass
-        Label(sttw,text = "Tarama Başlama Tarihi : "+ str(datetime.now())[0:16],font=("Arial",12)).place(x=0,y=10)
-        Label(sttw,text = "\nTaranan Veri sayısı : " + str(veri_count),font=("Arial",12)).place(x=0,y=120)
-        Label(sttw,text = "\nHatalı Veri Sayısı : " + str(hata_count),font=("Arial",12)).place(x=0,y=180)
-        Button(sttw,text = "TARAMAYI DURDUR ",font=("Arial",12),command = stop).place(x=50,y=300)
+        Label(sttw,text = "Tarama Başlama Tarihi : "+ str(datetime.now())[0:16],fg= "white",bg = "#094BFC",font=("Arial",12)).place(x=0,y=10)
+        Label(sttw,text = "Taranan Veri sayısı : " + str(veri_count),fg= "white",bg = "#094BFC",font=("Arial",12)).place(x=0,y=120)
+        Label(sttw,text = "Hatalı Veri Sayısı : " + str(hata_count),fg= "white",bg = "#094BFC",font=("Arial",12)).place(x=0,y=180)
+        Button(sttw,text = "TARAMAYI DURDUR ",font=("Arial",12),fg = "white",bg = "#570215",command = stop).place(x=50,y=300)
         durum = Thread(target = parallel)
         durum.daemon = True
         durum.start()
@@ -205,12 +209,11 @@ def sorgula(again = None):
         print(e)
     #input("Devam Etmek için Enter'a basınız")
     if verino.iptal == False:   # SORGU BİLGİLERİ İSTENİYOR MU ?
-        analiz = verianaliz.analiz(verino.dosya,verino.dosya_yolu)
-        print(analiz.info)
+        analiz = verianaliz.analiz(verino.dosya,verino.dosya_yolu,noprint = False)
         try:
             input('Grafiği görmek için Enterla \n Çıkmak için CTRL+C ...') 
             analiz.plot()
-            input('Grafiği görmek için Enterla \n Çıkmak için CTRL+C ...')
+            input('\n\nDevam etmek için Entera basınız....')
             return hata_ekrani()
         except KeyboardInterrupt:
             pass
@@ -363,8 +366,7 @@ def errorlog():
                 menu.destroy()
                 return Menu()
             else:
-                    analiz = verianaliz.analiz(str(error_analiz),hatalar[goruntule-1][0:10])
-                    print(analiz.info)
+                    analiz = verianaliz.analiz(str(error_analiz),hatalar[goruntule-1][0:10],noprint = True)
                     input('Grafiği görmek için Enterla')
                     analiz.plot()
                     print("Sorgu tamamlandı.\n")
@@ -373,6 +375,10 @@ def errorlog():
         def cikis():
             errorwindow.destroy()
             os.chdir(dosyayolu)
+            try:
+                menu.destroy()
+            except:
+                pass
             return Menu()
         def again():
             errorwindow.destroy()
@@ -380,6 +386,7 @@ def errorlog():
             return errorlog()
         Button(errorwindow,text = "Otomatik kaydedilen verileri görüntüle",command = oto).pack()
         Button(errorwindow,text = "Manuel kaydedilen verileri görüntüle",command = manual).pack()
+        Button(errorwindow,text = "Menüye Dön",command = cikis).pack()
         errorwindow.mainloop()
 
 #----------------------------------- ANA MENU ------------------------------------------        
@@ -388,16 +395,24 @@ def Menu():
     menu = Tk()
     menu.title("Trend Tracker")
     menu.geometry("400x400")
+    menu.configure(bg = "#094BFC")
     try:
         menu.iconbitmap("bin/icon.ico")
     except:
         pass
-    Label (menu,text = "Ne Yapmak İstiyorsunuz ?",font=("Arial",14)).pack()
+    Label (menu,text = "Ne Yapmak İstiyorsunuz ?",bg = "#094BFC",fg = "white",font=("Arial",14)).pack()
     Button(menu,text = "Makine ile Paralel Çalışma",font=("Arial",12),command = run).pack()
     Button(menu,text = "Makine Verileri Sorgula",font = ("Arial",12),command = sorgula).pack()
     Button(menu,text = "Hataları Görüntüle",font = ("Arial",12),command = errorlog).pack()
     Button(menu,text = " ÇIKIŞ ",command = menu.destroy).pack()
     line(52)
     menu.mainloop()
-
-Menu()
+    
+if __name__== "__main__":
+    try:
+        if sys.argv[1] == "run":
+            run()
+        else:
+            Menu()
+    except:
+        Menu()
