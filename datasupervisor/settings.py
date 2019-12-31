@@ -15,7 +15,7 @@ class settings():
 
         self.max_pressure = 20              # MAX BASINÇ ( Default = 20 MPa)
 
-        self.wait_for_data = 38             #Verinin oluşması için bekleme süresi (Default = 38 sec)
+        self.wait_for_data = 1             #Verinin oluşması için bekleme süresi (Default = 38 sec)
 
         self.min_angle = 10                 # ( Default = 10 degrees)
 
@@ -23,7 +23,7 @@ class settings():
 
         self.amp = 20                       # 3000 ve aşağı sayıdaki veriler için genlik değeri ( Default = 20)
 
-#------------------------------EK AYARLAR-------------------------------------
+#------------------------------EK AYARLAR--------------------------------------
         self.wait_for_next_peak = 1         # Peak bulduktan sonra bekleme süresi(default = 1)
 
         self.amp1 = 100                     # 3000 den fazla veri sayısı için genlik değeri ( Default = 100)
@@ -38,3 +38,26 @@ class settings():
         self.default_path = os.getcwd()     #Programın varsayılan çalışma dosyası.
 
         self.default_peak_count = 2         # Minimum peak sayısı
+
+        self.process_time = 30              # Proses Süresi
+#------------------------------PROGRAM İÇİ PARAMETRELER ( DOKUNMAYIN ! )--------------------------------------
+        self.paralel_stop = None
+#------------------------------PROGRAM DOSYA YOLLARINI TANITAN CLASS-------------------------------------
+class program_files:
+    def __init__(self,):
+        self.main = os.getcwd()
+        os.chdir("Datas")
+        self.datas = os.getcwd()
+        os.chdir("..")
+        os.chdir("Errors")
+        self.errors = os.getcwd()
+        os.chdir("Auto")
+        self.auto_errors = os.getcwd()
+        os.chdir("..")
+        os.chdir("Manual")
+        self.manu_errors = os.getcwd()
+        os.chdir(self.main)
+        os.chdir("bin/Errors")
+        self.perrors = os.getcwd()
+        os.chdir(self.main)
+            

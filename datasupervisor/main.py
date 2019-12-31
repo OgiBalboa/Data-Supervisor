@@ -1,13 +1,13 @@
-#--------------------------------------------
+#-------------------------------------------------
 # Name:         Data Supervisor Main Menu
 # Author :      ogulcan@AISIN
 # Date :        13.12.2019
 # Licence :     <GNU GCC>
-#--------------------------------------------
+#-------------------------------------------------
 print("\n"*50)
 from threading import Thread  
 from tkinter import *
-from tkinter import filedialog
+from tkinter import filedialog,messagebox
 print("Yükleniyor...")
 import time
 from time import sleep
@@ -25,63 +25,72 @@ global dosyayolu
 dosyayolu = os.getcwd()
 global son_dosya_adi
 son_dosya_adi = ""
-from settings import settings
+from settings import settings, program_files
 settings = settings()
+program_files = program_files()
 #-------------------------------MAKİNE İLE PARALEL ÇALIŞMA--------------------------------------------
 global sttw # Status window için global değişken
 def parallel():   # Makine ile paralel çalışmayı sonsuz döngüye sokabilmek için ana programdan ayrılması gerekmekte. Bunun için threading kullanıldı.
-    global paralel_stop
+    global file
     while 1:
-            if paralel_stop != True:
-                paralel(anayol)
+            if settings.paralel_stop != True:
+                file = None
+                file = filesearch.dosyabul()
+                #Label(sttw,text = "reftime : " + str(file.reftime),fg= "white",bg = "#094BFC",font=("Arial",12)).place(x=0,y=95)
+                paralel()
             else:
-                line(52)
-                print("Taranan veri sayısı : " + str(veri_count))
-                print("Hatalı veri sayısı : " + str(hata_count))
-                input("\n\nDevam etmek için Enter'a basınız.")
-                os.chdir(anayol)
-                return Menu()    
-def paralel(path):
+                time.sleep(1)
+def paralel():
     global veri_count
     global hata_count
     global son_dosya_adi
     global sttw
-    os.chdir(path)
-    file = filesearch.dosyabul()
-    if file.current_date(str(datetime.now())[0:10]) is True : # FILE SEARCH : dosya adı bulmak için
-        file.filename = str(datetime.now())[0:10]
-    else :
-        file.findate()
-    if son_dosya_adi != file.filename:
-        son_dosya_adi = file.filename
-        print("\nTarama yapılan dosya tarihi : " + str(file.filename))
-    Label(sttw,text = "Tarama yapılan dosya tarihi : " + str(file.filename),fg= "white",bg = "#094BFC",font=("Arial",12)).place(x=0,y=70)
-    file.detect_new(file.filename) # Yeni veri bulmak için
-    if file.iptal == True:
-        return run(again = True)
+    global file
+    def gui_update():
+        Label(sttw,text = "\nHatalı Veri Sayısı : " + str(hata_count),fg= "red",bg = "#094BFC",font=("Arial",12)).place(x=0,y=180)
+        Label(sttw,text = "\nTaranan veri sayısı : " + str(veri_count),fg= "white",bg = "#094BFC",font=("Arial",12)).place(x=0,y=120)
+        if str(file.data_name) != None:
+            Label(sttw,text = "\nSon Taranan Dosya : " + str(file.data_name),fg= "white",bg = "#094BFC",font=("Arial",12)).place(x=0,y=240)
+        Label(sttw,text = "\nDurum : " + str(file.status),fg= "green",bg = "#094BFC",font=("Arial",12)).place(x=0,y=300)        
+    os.chdir(program_files.datas)
+    file.findate()
+    gui_update()
+    Label(sttw,text = "Tarama yapılan dosya tarihi : " + str(file.filedate),fg= "white",bg = "#094BFC",font=("Arial",12)).place(x=0,y=70)
+    file.detect_new(file.filedate) # Yeni veri bulmak için
+    gui_update()
+    if file.search_again == True:
+        return
     file.fileflag = None
     while 1:
-        if file.data_name[-4::] == ".csv":
-                analiz = verianaliz.analiz(file.data_name,file.data_path,flag = True)
-                file = None
-                veri_count+=1
-                if analiz.errorflag == True:
-                    hata_count+= 1
-                Label(sttw,text = "\nHatalı Veri Sayısı : " + str(hata_count),fg= "white",bg = "#094BFC",font=("Arial",12)).place(x=0,y=180)
-                Label(sttw,text = "\nTaranan veri sayısı : " + str(veri_count),fg= "white",bg = "#094BFC",font=("Arial",12)).place(x=0,y=120)
+            if file.data_name != None and settings.paralel_stop != True:
+                if file.data_name[-4::] == ".csv":
+                        file.status = "Analiz Başladı               "
+                        gui_update()
+                        analiz = verianaliz.analiz(file.data_name,file.data_path,date =file.filedate, flag = True,noprint = True)
+                        #file = None
+                        file.status = "Analiz Edildi                "
+                        veri_count+=1
+                        if analiz.errorflag == True:
+                            hata_count+= 1
+                        gui_update()
+                        return paralel()
+                else :
+                    file.detect_new(file.filedate)
+                    if file.search_again == True:
+                        break
+            elif settings.paralel_stop == True:
                 break
-        else :
-            file.findate()
+
 def run(again = None):
     global veri_count
     global hata_count
     global anayol
     global sttw
-    global paralel_stop
-    paralel_stop = None
+    settings.paralel_stop = None
     def stop():
         sttw.destroy()
-        paralel_stop = True
+        settings.paralel_stop = True
+        return Menu()
     if again != True:
         veri_count = 0
         hata_count = 0
@@ -96,7 +105,7 @@ def run(again = None):
         global sttw
         sttw = Tk()
         sttw.title("TARAMA BAŞLADI")
-        sttw.geometry("400x400")
+        sttw.geometry("600x600")
         sttw.configure(bg = "#094BFC")
         try:
             sttw.iconbitmap("bin/icon.ico")
@@ -104,15 +113,22 @@ def run(again = None):
             pass
         Label(sttw,text = "Tarama Başlama Tarihi : "+ str(datetime.now())[0:16],fg= "white",bg = "#094BFC",font=("Arial",12)).place(x=0,y=10)
         Label(sttw,text = "Taranan Veri sayısı : " + str(veri_count),fg= "white",bg = "#094BFC",font=("Arial",12)).place(x=0,y=120)
-        Label(sttw,text = "Hatalı Veri Sayısı : " + str(hata_count),fg= "white",bg = "#094BFC",font=("Arial",12)).place(x=0,y=180)
-        Button(sttw,text = "TARAMAYI DURDUR ",font=("Arial",12),fg = "white",bg = "#570215",command = stop).place(x=50,y=300)
+        Label(sttw,text = "_"*150,fg= "white",bg = "#094BFC").place(x=0,y=100)
+        Label(sttw,text = "_"*150,fg= "white",bg = "#094BFC").place(x=0,y=220)
+        Button(sttw,text = "TARAMAYI DURDUR ",font=("Arial",12),fg = "white",bg = "#570215",command = stop).place(x=50,y=500)
         durum = Thread(target = parallel)
         durum.daemon = True
         durum.start()
     sttw.mainloop()
+    try:
+        if file.search_again == True:
+            durum.join()
+    except:
+        pass
+    """
     os.chdir(anayol)
     return Menu()
-
+    """
 vericount = 0 # Paralel çalışma sırasında verileri ve hataları sayacak olan değişken.
 hatacount = 0
 #------------------------------ DOSYA SORGULAMA ------------------------------------
@@ -194,7 +210,7 @@ def sorgula(again = None):
                         hatacount+=1  
                         line(52)   
                         print("\n")
-                    print(vericount,"/",len(verino.files))
+                    #print(vericount,"/",len(verino.files))
                 verino.gunluk = False
                 print("\nTaranan veri sayısı : " + str(len(verino.files)) + "\nHatalı veri sayısı : " + str(hatacount))
                 if hatacount >0:
@@ -275,8 +291,7 @@ def errorlog():
             line(52)
             print("\nError Logları : \n")
             anlik = os.getcwd()
-            os.chdir(dosyayolu)
-            os.chdir('Errors')
+            os.chdir(program_files.auto_errors)
             hatalar = os.listdir()
             cout = 0
             for i in hatalar:
@@ -315,9 +330,7 @@ def errorlog():
             errorwindow.destroy()
             line(52)
             anlik = os.getcwd()
-            os.chdir(dosyayolu)
-            os.chdir('Errors')
-            os.chdir("Manual")
+            os.chdir(program_files.manu_errors)
             initial = os.getcwd()
             tarih = filedialog.askdirectory(initialdir =initial ,title = "Dosya Tarihi Seçiniz",)
             try:
@@ -400,12 +413,18 @@ def Menu():
         menu.iconbitmap("bin/icon.ico")
     except:
         pass
+    def settin():
+        messagebox.showinfo("DİKKAT !","Ayarlar dosyasını açtıktan sonra programı yeniden başlatınız !")
+        os.system("start setting.bat")
     Label (menu,text = "Ne Yapmak İstiyorsunuz ?",bg = "#094BFC",fg = "white",font=("Arial",14)).pack()
     Button(menu,text = "Makine ile Paralel Çalışma",font=("Arial",12),command = run).pack()
     Button(menu,text = "Makine Verileri Sorgula",font = ("Arial",12),command = sorgula).pack()
     Button(menu,text = "Hataları Görüntüle",font = ("Arial",12),command = errorlog).pack()
+    Button(menu,text = "Ayarlar",font = ("Arial",12),command = settin).pack()    
     Button(menu,text = " ÇIKIŞ ",command = menu.destroy).pack()
-    line(52)
+    if settings.wait_for_data < settings.process_time:
+        messagebox.showinfo("DİKKAT !","veri bekleme süreniz ("+str(settings.wait_for_data)+\
+                             ") Proses Sürenizden ("+str(settings.process_time)+") daha kısa, hataya yol açabilir !")
     menu.mainloop()
     
 if __name__== "__main__":

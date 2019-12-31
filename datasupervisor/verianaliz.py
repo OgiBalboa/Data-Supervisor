@@ -4,6 +4,7 @@ import tkinter
 from tkinter import Button
 import time
 from datetime import datetime
+
 #-----------------------------------------------------
 # Name:         Data Supervisor Data Analisys Module
 # Author :      ogulcan@AISIN
@@ -19,10 +20,11 @@ from tkinter import filedialog
 from tkinter import messagebox
 import math
 import numpy as np
-from settings import settings
+from settings import settings,program_files
 settings = settings()
+program_files = program_files()
 class analiz():
-    def __init__(self,isim,yol=None,flag =None,noprint = None):
+    def __init__(self,isim,yol=None,flag =None,noprint = None, date = None):
         self.vericount = 0
         self.defaultpath = os.getcwd() #Default dosya yolu
         self.surelist = []
@@ -108,8 +110,8 @@ class analiz():
             self.veri_sayisi = self.vericount-8
 #-------------------------------ANALİZ SONRASI SON İŞLEMLER-------------------------------------------------------   
             if self.aramaflag == True and self.errorflag == True:
-                self.hatakayit()
-            os.chdir(self.defaultpath) # ANA DOSYA YOLUNA GERİ DÖN
+                self.hatakayit(date)
+            os.chdir(program_files.main) # ANA DOSYA YOLUNA GERİ DÖN
             
             if self.noprint != True:
                 print(self.info)
@@ -234,14 +236,14 @@ class analiz():
                                 "\nSensör 2 Basınç Değeri (kPa): " + str(self.sensor2[i]) 
                 self.errorflag = True
                 return
-    def hatakayit(self,):
-            os.chdir(self.defaultpath)
-            try :
-                os.chdir("Errors")
+    def hatakayit(self,date):
+            os.chdir(program_files.auto_errors)
+            try:
+                os.mkdir(date)
             except:
-                os.chdir("..")
-                os.chdir("..")
-                os.chdir("Errors")
+                pass
+            finally:
+                os.chdir(date)
             self.error_filename = "20" + self.isim[-17:-15] +"-"+ self.isim[-15:-13] +"-"+ self.isim[-13:-11] +"_" + self.isim[-11:-9] +"-"+ self.isim[-9:-7] +".txt"
             self.errorlog = open(self.error_filename,'a+')
             self.errorlog.write("\nOrijinal dosya adı :"+self.isim+"\n")
@@ -281,11 +283,10 @@ class analiz():
                 name.set_ylabel(ylabel)   
             fig,(sub1,sub3) = plt.subplots(2)
             fig,(sub2,sub4) = plt.subplots(2)
-            plt.axes([0, 0.5, 0, 1500])
             #plt.figure()
             #sub = fig.add_subplot(111)
-            draw(sub1,"darkred","SENSÖR 1","Süre(ms)","Basınç(MPa)",self.surelist,self.sensor1)
-            draw(sub2,'darkred',"SENSÖR 2","Süre(ms)","Basınç(MPa)",self.surelist,self.sensor2)
+            draw(sub1,"darkred","SENSÖR 1","Süre(s)","Basınç(MPa)",self.surelist,self.sensor1)
+            draw(sub2,'darkred',"SENSÖR 2","Süre(s)","Basınç(MPa)",self.surelist,self.sensor2)
             draw(sub3,'lightblue',"SENSRÖR 1 AÇILAR", "Süre (s)"," Açı (Derece)",self.surelist,self.anglelist1)
             draw(sub4,'lightblue',"SENSRÖR 2 AÇILAR", "Süre (s)"," Açı (Derece)",self.surelist,self.anglelist2)
             plt.show()
@@ -294,7 +295,7 @@ class analiz():
 class sorgu():
     def __init__(self,):
         self.defaultpath = os.getcwd() #Default dosya yolu
-        os.chdir("Datas")
+        os.chdir(program_files.datas)
         self.temppath = os.getcwd()
         self.gui()
     def gui(self,):
@@ -336,7 +337,7 @@ class sorgu():
             self.iptal = True
             self.gunluk = False
             self.penc.destroy()
-            os.chdir(self.defaultpath)
+            os.chdir(program_files.main)
             
         Button(self.penc,text = "Tarih ile arama ",command = tarih).place(x = 60, y = 20)
         Button(self.penc,text = "Dosya Bul",command = askdir).place(x = 180, y = 20)
@@ -347,20 +348,7 @@ class sorgu():
                 
     def search(self,again = None):
         self.iptal = False
-        try:
-            os.chdir("Datas")
-        except:
-            pass
-        
-        try:
-            #os.chdir(self.sorgu)
-            pass
-        except:
-            #messagebox("HATA !", "Tarihi yanlis girdiniz ve ya o tarih de dosya bulunmamakta,tekrar deneyin. ")
-            print(os.getcwd())
-            print("hatali")
-            self.gui()
-            return None
+        os.chdir(program_files.datas)
         os.chdir(self.sorgu)
         self.dosya_yolu = os.getcwd()
         self.dosyalar = os.listdir()
@@ -398,18 +386,10 @@ class sorgu():
         else:
             self.gunluk = False
             self.dosya = self.files[int(self.secim)-1]
-        os.chdir(self.defaultpath)
+        os.chdir(program_files.main)
     def go_to_date(name,date): # manuel olarak Datas içerisinde bir tarihe erişmek için kullanılır.name, yıl (son iki indisi) ay gün ve saat şeklinde bitişik olarak girilmelidir.(190702). Bunun için ayir fonksiyonu kullanılabilir.
         global check
-        try:
-            os.chdir("Datas")
-        except:
-            os.chdir("..")
-            try :
-                os.chdir("Datas")
-            except:
-                os.chdir("..")
-                os.chdir("Datas")
+        os.chdir(program_files.datas)
         os.chdir(date)
         dosyalar = os.listdir()
         for i in dosyalar:
