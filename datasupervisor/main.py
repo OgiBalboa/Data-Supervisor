@@ -292,6 +292,17 @@ def errorlog():
             print("\nError Logları : \n")
             anlik = os.getcwd()
             os.chdir(program_files.auto_errors)
+            tarih = filedialog.askdirectory(initialdir =os.getcwd() ,title = "Dosya Tarihi Seçiniz",)
+            try:
+                os.chdir(tarih)
+                menu.destroy()
+            except:
+                messagebox.showerror("HATA ! "," Tarih Seçmediniz !")
+                try:
+                    menu.destroy()
+                except:
+                    pass
+                return Menu()
             hatalar = os.listdir()
             cout = 0
             for i in hatalar:

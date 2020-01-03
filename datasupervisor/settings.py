@@ -40,8 +40,24 @@ class settings():
         self.default_peak_count = 2         # Minimum peak sayısı
 
         self.process_time = 30              # Proses Süresi
+
+
+
+
+
+
+
+
+
 #------------------------------PROGRAM İÇİ PARAMETRELER ( DOKUNMAYIN ! )--------------------------------------
         self.paralel_stop = None
+
+
+
+
+
+
+
 #------------------------------PROGRAM DOSYA YOLLARINI TANITAN CLASS-------------------------------------
 class program_files:
     def __init__(self,):

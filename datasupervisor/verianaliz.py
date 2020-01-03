@@ -222,10 +222,7 @@ class analiz():
 #-------------------------------HATA ARAMA VE KAYIT-------------------------------------------------------
     def zaman_hatasi(self,):
             if float(self.peaklist1[-1]-self.peaklist1[0]) < settings.min_enj_time or float(self.peaklist2[-1]-self.peaklist2[0] < settings.min_enj_time):
-                    self.error_info += "\n\nHata Türü : Enjeksiyon Süre Hatası" +"\nSENSOR 1 ----> Peak Sayısı  :  " + str(self.peakcount1) + \
-                    "\nSENSOR 1 ----> Enjeksiyon Başlangıç Zamanı   :  " + str(self.peaklist1[0]) +"\nSENSOR 1 ---->  Enjeksiyon Süresi  :  "+ self.enjeksiyon_suresi1 + \
-                    "\n\nSENSOR 2 ----> Peak Sayısı  :  " + str(self.peakcount2) + \
-                    "\nSENSOR 2 ----> Enjeksiyon Başlangıç Peak Time  :  " + str(self.peaklist2[0]) + "\nSENSOR 2 ----> Enjeksiyon Süresi :" + self.enjeksiyon_suresi2
+                    self.error_info += "\n\nHata Türü : Enjeksiyon Süre Hatası" 
                     if self.noprint != True:
                         print(self.error_info)
                         print("*" * 50)
