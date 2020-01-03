@@ -26,7 +26,7 @@ class dosyabul():
             os.chdir(str(datetime.now())[0:10])
             self.filedate = str(datetime.now())[0:10]
             self.fileflag = True
-            self.status = "Yeni Veri Bekleniyor                "
+            self.status = "Yeni Veri Bekleniyor " + " "*55
             os.chdir(program_files.datas)
         except:
             try:
@@ -66,24 +66,19 @@ class dosyabul():
             - datetime.strptime(reftime, datetimeFormat)
         except:
             pass
-        if self.diff.seconds > 60:
-            self.status = "Yeni Tarih Aranıyor"
-            print("yeni tarihe geçiliyor")
+        if self.diff.seconds > 10:
             self.reftime = str(datetime.now())
-            try :
-                os.chdir(program_files.datas)
-                os.chdir(str(datetime.now())[0:10])
-                self.search_again = False
-            except Exception as e :
-                os.mkdir(str(datetime.now())[0:10])
+            if self.filedate != str(datetime.now())[0:10]:
                 self.search_again = True
-                """
-                os.chdir(program_files.perrors)
-                with open(str(datetime.now())[0:10]+".txt","+a") as errorlog:
-                    errorlog.write(str(e))
-                    errorlog.write("\n")
-                """
-            
+                self.status = "Yeni Tarih Aranıyor"
+                print("yeni tarihe geçiliyor")
+                os.chdir(program_files.datas)
+                
+                try:
+                    os.mkdir(str(datetime.now())[0:10])
+                    
+                except Exception as e :
+                    print(e)
         else:
             self.search_again = False
         
