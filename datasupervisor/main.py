@@ -54,7 +54,6 @@ def paralel():
         Label(sttw,text = "\nDurum : " + str(file.status),fg= "green",bg = "#094BFC",font=("Arial",12)).place(x=0,y=300)        
     os.chdir(program_files.datas)
     file.findate()
-    gui_update()
     Label(sttw,text = "Tarama yapılan dosya tarihi : " + str(file.filedate),fg= "white",bg = "#094BFC",font=("Arial",12)).place(x=0,y=70)
     file.detect_new(file.filedate) # Yeni veri bulmak için
     gui_update()
@@ -64,16 +63,15 @@ def paralel():
     while 1:
             if file.data_name != None and settings.paralel_stop != True:
                 if file.data_name[-4::] == ".csv":
-                        file.status = "Analiz Başladı               "
+                        file.status = "Analiz Başladı " +" "*55
                         gui_update()
                         analiz = verianaliz.analiz(file.data_name,file.data_path,date =file.filedate, flag = True,noprint = True)
                         #file = None
-                        file.status = "Analiz Edildi                "
                         veri_count+=1
+                        gui_update()
                         if analiz.errorflag == True:
                             hata_count+= 1
-                        gui_update()
-                        return paralel()
+                        break
                 else :
                     file.detect_new(file.filedate)
                     if file.search_again == True:
@@ -113,6 +111,8 @@ def run(again = None):
             pass
         Label(sttw,text = "Tarama Başlama Tarihi : "+ str(datetime.now())[0:16],fg= "white",bg = "#094BFC",font=("Arial",12)).place(x=0,y=10)
         Label(sttw,text = "Taranan Veri sayısı : " + str(veri_count),fg= "white",bg = "#094BFC",font=("Arial",12)).place(x=0,y=120)
+        Label(sttw,text = "\nHatalı Veri Sayısı : " + str(hata_count),fg= "red",bg = "#094BFC",font=("Arial",12)).place(x=0,y=180)
+        Label(sttw,text = "\nDurum : Yeni Tarama Başladı, Dosya Bekleniyor...",fg= "green",bg = "#094BFC",font=("Arial",12)).place(x=0,y=300)
         Label(sttw,text = "_"*150,fg= "white",bg = "#094BFC").place(x=0,y=100)
         Label(sttw,text = "_"*150,fg= "white",bg = "#094BFC").place(x=0,y=220)
         Button(sttw,text = "TARAMAYI DURDUR ",font=("Arial",12),fg = "white",bg = "#570215",command = stop).place(x=50,y=500)
@@ -231,7 +231,7 @@ def sorgula(again = None):
             analiz.plot()
             input('\n\nDevam etmek için Entera basınız....')
             return hata_ekrani()
-        except KeyboardInterrupt:
+        except :
             pass
         print("Sorgu tamamlandı.\n")
         line(52)
@@ -404,6 +404,7 @@ def errorlog():
 
 #----------------------------------- ANA MENU ------------------------------------------        
 def Menu():
+    os.chdir(program_files.main)
     global menu
     menu = Tk()
     menu.title("Trend Tracker")
@@ -434,4 +435,7 @@ if __name__== "__main__":
         else:
             Menu()
     except:
-        Menu()
+        try:
+            Menu()
+        except KeyboardInterrupt:
+            sys.exit()
