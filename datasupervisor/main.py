@@ -8,6 +8,7 @@ print("\n"*50)
 from threading import Thread  
 from tkinter import *
 from tkinter import filedialog,messagebox
+from tkinter import StringVar, IntVar
 print("Yükleniyor...")
 import time
 from time import sleep
@@ -47,11 +48,22 @@ def paralel():
     global sttw
     global file
     def gui_update():
+        
+        """
         Label(sttw,text = "\nHatalı Veri Sayısı : " + str(hata_count),fg= "red",bg = "#094BFC",font=("Arial",12)).place(x=0,y=180)
         Label(sttw,text = "\nTaranan veri sayısı : " + str(veri_count),fg= "white",bg = "#094BFC",font=("Arial",12)).place(x=0,y=120)
         if str(file.data_name) != None:
             Label(sttw,text = "\nSon Taranan Dosya : " + str(file.data_name),fg= "white",bg = "#094BFC",font=("Arial",12)).place(x=0,y=240)
-        Label(sttw,text = "\nDurum : " + str(file.status),fg= "green",bg = "#094BFC",font=("Arial",12)).place(x=0,y=300)        
+        Label(sttw,text = "\nDurum : " + str(file.status),fg= "green",bg = "#094BFC",font=("Arial",12)).place(x=0,y=300)
+        """
+        tarama_tarihi_gui.set("Tarama Başlama Tarihi : "+ str(datetime.now())[0:16])
+        tarama_tarihi_gui.get()
+        veri_sayisi_gui.set("Taranan Veri sayısı : " + str(veri_count))
+        veri_sayisi_gui.get()
+        hatali_veri_gui.set("\nHatalı Veri Sayısı : " + str(hata_count))
+        hatali_veri_gui.get()
+        durum_gui.set("\nDurum : " + str(file.status))
+        durum_gui.get()
     os.chdir(program_files.datas)
     file.findate()
     Label(sttw,text = "Tarama yapılan dosya tarihi : " + str(file.filedate),fg= "white",bg = "#094BFC",font=("Arial",12)).place(x=0,y=70)
@@ -65,12 +77,16 @@ def paralel():
                 if file.data_name[-4::] == ".csv":
                         file.status = "Analiz Başladı " +" "*55
                         gui_update()
-                        analiz = verianaliz.analiz(file.data_name,file.data_path,date =file.filedate, flag = True,noprint = True)
-                        #file = None
+                        analiz = verianaliz.analiz(file.data_name,file.data_path,date =file.filedate, aramaflag = True,noprint = True)
+                        if analiz.errorflag == True :
+                            err = "Var"
+                        else :
+                            err = "Yok"
+                        file.status = "Analiz Tamamlandı, Hata : " +str(err) + ".....Yeni veri bekleniyor ....."+" "*55
                         veri_count+=1
-                        gui_update()
                         if analiz.errorflag == True:
                             hata_count+= 1
+                        gui_update()
                         break
                 else :
                     file.detect_new(file.filedate)
@@ -80,6 +96,10 @@ def paralel():
                 break
 
 def run(again = None):
+    global tarama_tarihi_gui
+    global veri_sayisi_gui
+    global hatali_veri_gui
+    global durum_gui
     global veri_count
     global hata_count
     global anayol
@@ -109,10 +129,18 @@ def run(again = None):
             sttw.iconbitmap("bin/icon.ico")
         except:
             pass
-        Label(sttw,text = "Tarama Başlama Tarihi : "+ str(datetime.now())[0:16],fg= "white",bg = "#094BFC",font=("Arial",12)).place(x=0,y=10)
-        Label(sttw,text = "Taranan Veri sayısı : " + str(veri_count),fg= "white",bg = "#094BFC",font=("Arial",12)).place(x=0,y=120)
-        Label(sttw,text = "\nHatalı Veri Sayısı : " + str(hata_count),fg= "red",bg = "#094BFC",font=("Arial",12)).place(x=0,y=180)
-        Label(sttw,text = "\nDurum : Yeni Tarama Başladı, Dosya Bekleniyor...",fg= "green",bg = "#094BFC",font=("Arial",12)).place(x=0,y=300)
+        tarama_tarihi_gui = StringVar()
+        tarama_tarihi_gui.set("Tarama Başlama Tarihi : "+ str(datetime.now())[0:16])
+        veri_sayisi_gui = StringVar()
+        veri_sayisi_gui.set("Taranan Veri sayısı : " + str(veri_count))
+        hatali_veri_gui = StringVar()
+        hatali_veri_gui.set("\nHatalı Veri Sayısı : " + str(hata_count))
+        durum_gui = StringVar()
+        durum_gui.set("\nDurum : Yeni Tarama Başladı, Dosya Bekleniyor...")
+        Label(sttw,textvariable = tarama_tarihi_gui,fg= "white",bg = "#094BFC",font=("Arial",12)).place(x=0,y=10)
+        Label(sttw,textvariable =veri_sayisi_gui ,fg= "white",bg = "#094BFC",font=("Arial",12)).place(x=0,y=120)
+        Label(sttw,textvariable =hatali_veri_gui ,fg= "red",bg = "#094BFC",font=("Arial",12)).place(x=0,y=180)
+        Label(sttw,textvariable = durum_gui,fg= "green",bg = "#094BFC",font=("Arial",12)).place(x=0,y=300)
         Label(sttw,text = "_"*150,fg= "white",bg = "#094BFC").place(x=0,y=100)
         Label(sttw,text = "_"*150,fg= "white",bg = "#094BFC").place(x=0,y=220)
         Button(sttw,text = "TARAMAYI DURDUR ",font=("Arial",12),fg = "white",bg = "#570215",command = stop).place(x=50,y=500)
@@ -140,7 +168,7 @@ def hata_ekrani():
         filename = verino.sorgu[-10::]
         for i in errorlist:
            data_name = verianaliz.sorgu.ayir(verino.files[i])+".txt"
-           error = verianaliz.analiz(verino.files[i],filename,noprint = True,flag=False)
+           error = verianaliz.analiz(verino.files[i],filename,noprint = True,aramaflag=False)
            recov = os.getcwd()
            os.chdir(dosyayolu)
            os.chdir("Errors")
@@ -201,7 +229,7 @@ def sorgula(again = None):
                 print("Gün içinde bulunan tüm veriler taranıyor....\n")
                 for veriler in range (0,len(verino.files)):
                     vericount+=1
-                    gunluk_analiz = verianaliz.analiz(verino.files[veriler],verino.dosya_yolu,flag = False,noprint = True)
+                    gunluk_analiz = verianaliz.analiz(verino.files[veriler],verino.dosya_yolu,aramaflag = False,noprint = True)
                     if gunluk_analiz.errorflag == True:
                         errorlist.append(veriler)
                         print("HATALI VERİ ADI  :  ",end = '')

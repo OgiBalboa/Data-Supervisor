@@ -24,7 +24,7 @@ from settings import settings,program_files
 settings = settings()
 program_files = program_files()
 class analiz():
-    def __init__(self,isim,yol=None,flag =None,noprint = None, date = None):
+    def __init__(self,isim,yol=None,aramaflag =None,noprint = None, date = None):
         self.vericount = 0
         self.defaultpath = os.getcwd() #Default dosya yolu
         self.surelist = []
@@ -38,7 +38,7 @@ class analiz():
         self.curtime2 = 0
         self.peaklist1= [] 
         self.peaklist2= []
-        self.aramaflag = flag
+        self.aramaflag = aramaflag
         self.isim = isim
         self.error_info = "\n\nBULUNAN HATALAR \n"+"*"*60
         self.noprint = noprint
@@ -47,53 +47,38 @@ class analiz():
         try:
             os.chdir(yol)
         except:
-            pass
-#-------------------------------DOSYA AÇILIR-------------------------------------------------------                         
+            pass         
         if self.aramaflag == True:
-            time.sleep(settings.wait_for_data)
+            time.sleep(settings.wait_for_data) # DOSYA GELMESİNİ BEKLE
+        #-------------------------------DOSYA AÇILIR------------------------------------------------------- 
         with open(isim,newline='') as file:
             spm = csv.reader(file,delimiter=' ',quotechar = '|')
             for self.r in spm:    # DATA İÇERİSİNDEKİ HER BİR VERİYİ DENETLER          
                 self.veriayir()               
                 self.vericount+=1
+            #----------Veri Sayısına Göre Amplitude çarpanı değeri değişir--------
             if self.vericount <3001:
                 self.gen1 = settings.amp
                 self.gen2 = settings.amp
             elif self.vericount >3000:
                 self.gen1 = settings.amp1
-                self.gen2 = settings.amp1                
-            if self.errorflag == False and self.aramaflag != True and self.noprint != True :
+                self.gen2 = settings.amp1
+            #------------- Sorgu Sırasında Terminale Bilgi Yazılıp yazılmayacağı noprint flagı ile belirlenir---------
+            if self.errorflag == False and self.noprint != True :
                 print("Basınç Bilgisi :\n")
                 print("Basınç değerleri istenilen aralıkta ! ")
-            elif self.errorflag == True and self.aramaflag != True and self.noprint != True:
+            elif self.errorflag == True and self.noprint != True:
                 print("Basınç Bilgisi :\n")
                 print("Hatalı basınç değeri tespit edildi ! ")
             try :
                 self.denetle() #ALINAN VERİLERİ İNCELE
             except Exception as e:
                 pass
-#-------------------------------PEAK SAYI HATALARI-------------------------------------------------------  
-            """
-            if self.peakcount1>settings.default_peak_count or self.peakcount2>settings.default_peak_count:
-                if self.noprint != True:
-                    print("\nHATA ! Sensörlerin birinde Peak sayısı fazla, Hata bulunmuş olabilir.")
-                self.error_info += "\n Hata Tipi : Sensör Peak Sayısı Hatası\n"
-                self.error_info += "\nTespit edilen Sensör 1 Peakler : "\
-                           +str(self.peaklist1) + "\nTespit edilen Sensör 2 Peakler : " +str(self.peaklist2)
-                self.errorflag = True
-                self.peakhata = True
-            """
-            if self.peakcount1 <settings.default_peak_count or self.peakcount2 < settings.default_peak_count:
-                if self.noprint != True:
-                    print("\nHATA ! Sensörlerin birinde Peak az, Hata bulunmuş olabilir.")
-                if self.peakhata != True:
-                    self.error_info += "\n Hata Tipi : Sensör Peak Sayısı Hatası\n"
-                    self.error_info += "\nTespit edilen Sensör 1 Peakler : "\
-                           +str(self.peaklist1) + "\nTespit edilen Sensör 2 Peakler : " +str(self.peaklist2)
-                self.errorflag = True
-#-------------------------------ENJEKSİYON SÜRE HATASI-------------------------------------------------------                  
+            #-------------------------------PEAK SAYI HATALARI-------------------------------------------------------  
+            self.peak_sayi_hatasi()
+            #-------------------------------ENJEKSİYON SÜRE HATASI-------------------------------------------------------                  
             try:
-                self.zaman_hatasi()
+                self.zaman_hatasi() # ZAMAN HATASINI DENETLEYEN FONKSİYON
             except Exception as e:
                 pass
                 self.errorflag = True
@@ -108,25 +93,26 @@ class analiz():
             except:
                 self.info +="\nSensör 2'de peak bulunamadı\n"              
             self.veri_sayisi = self.vericount-8
-#-------------------------------ANALİZ SONRASI SON İŞLEMLER-------------------------------------------------------   
-            if self.aramaflag == True and self.errorflag == True:
+            #-------------------------------ANALİZ SONRASI SON İŞLEMLER-------------------------------------------------------   
+            if self.aramaflag == True and self.errorflag == True: # ARAMA YAPILIYORSA VE HATA OLUŞMUŞSA HATAYI KAYDET
                 self.hatakayit(date)
             os.chdir(program_files.main) # ANA DOSYA YOLUNA GERİ DÖN
             
-            if self.noprint != True:
+            if self.noprint != True: # BİLGİ YAZILMASI İSTENİYORSA HATALARI TERMİNALE YAZ
                 print(self.info)
                 if self.aramaflag != True and self.errorflag == True:
                     print("\n"*3)
                     print(self.error_info)
                     print("*" * 50)
             file.close()
+#-------------------------------VERİLERİ AYIRIP LİSTELERE EKLEMEK İÇİN FONKSİYON-------------------------------------------------------   
     def veriayir(self,):
-            self.a = self.r[0].split(',')   # SURE VERİSİNİ AYIRIR
+            self.csv_time = self.r[0].split(',')   # SURE VERİSİNİ AYIRIR
             if self.vericount>6:  #ilk 6 veri info satırlarıdır
-                self.b = self.r[1].split(',')  #SENSOR 2 'nin verilerini ayırır
-                self.surelist.append(str(self.a[0]))
-                self.sensor1.append(str(self.a[1]))
-                self.sensor2.append(str(self.b[0])) #VERİLERİ AYIRIP LİSTELERE KAYDEDER
+                self.csv_sensor2 = self.r[1].split(',')  #SENSOR 2 'nin verilerini ayırır
+                self.surelist.append(str(self.csv_time[0]))
+                self.sensor1.append(str(self.csv_time[1]))
+                self.sensor2.append(str(self.csv_sensor2[0])) #VERİLERİ AYIRIP LİSTELERE KAYDEDER
     
 #-------------------------------VERİLERİ İNCELE-------------------------------------------------------                   
     def denetle(self,):
@@ -138,7 +124,7 @@ class analiz():
                 self.acibul1(i,self.gen1)
                 self.acibul2(i,self.gen2) # açı hesaplama için zaman bilgisi girilir.
                 self.peakdetect(i) # Hesaplanan açılar üzerinden peak denetlenir.
-            
+                self.basinchatadetect(i)
                 if settings.sample_range_start < i < settings.sample_range_stop: # 0.06 ve 2. saniye arasındaki değerler örnek olarak alınır.
                     if count1<10: # ilk 10 veri hesaplanır.
                         if int(self.anglelist1[-1]) != 0:  # 0 değerlerini katma
@@ -150,24 +136,17 @@ class analiz():
                         count2+=1
                     try :
                         if count1 == 10 and settings.min_angle < self.mean(sample1) < settings.max_angle:#Settings dosyasından alınan veriye göre açı değerini istenilen aralığa
-                            if int(self.anglelist1[-1]) >=10:
-                                self.gen1 += 5                                                      #çekebilmek için genliği arttırır.
+                            if int(self.anglelist1[-1]) >=settings.min_angle:
+                                self.gen1 += settings.inc_amp                                            #çekebilmek için genliği arttırır.
                                 count1 = 0
-                            #print("1.Genlik 5 arttı ! ")
                         if count2 == 10 and settings.min_angle < self.mean(sample2) < settings.max_angle:
-                            if int(self.anglelist1[-1]) >=10:
-                                self.gen2 += 5
+                            if int(self.anglelist1[-1]) >=settings.min_angle:
+                                self.gen2 += settings.inc_amp
                                 count2 = 0
-                            #print("2.Genlik 5 arttı ! ")
                     except Exception as e:
                         print(e)
             self.enjeksiyon_suresi1 = str(self.peaklist1[-1]-self.peaklist1[0])
             self.enjeksiyon_suresi2 = str(self.peaklist2[-1]-self.peaklist2[0]) # Enjeksiyon süresi hesaplanır. (ilk ve son peak)
-            
-            for i in range (0,len(self.surelist)):
-                if int(float(self.surelist[i])) < self.peaklist1[-1]*1000:
-                    self.basinchatadetect(i)
-    
             
     def mean(self,liste): #ALINAN ÖRNEKLEMİN ORTALAMA DEĞERİNİ HESAPLAR
         toplam = 0
@@ -193,10 +172,9 @@ class analiz():
         
         self.peakno1 = len(self.anglelist1)-1
         self.reftime1 = float(str(self.surelist[self.peakno1]))
-        #self.pressure_time1 =float(str(self.reftime1)) - float(str(self.curtime1))
-        if self.reftime1 < settings.wait_for_next_peak: # 1 SANİYE BOYUNCA PEAK ALGILAMA
+        if self.reftime1 < settings.wait_for_next_peak*2: # Başlangıçta bir süre peak algılama
             return None
-        if len(self.peaklist1) >= 1 and  self.reftime1 - float(self.peaklist1[-1])  >= 0.3 :
+        if len(self.peaklist1) >= 1 and  self.reftime1 - float(self.peaklist1[-1])  >= settings.wait_for_next_peak :
                 self.peaklist1.append(self.reftime1)
                 self.curtime1 = self.reftime1
                 self.peakcount1 += 1
@@ -208,16 +186,13 @@ class analiz():
     def peak2(self,):
         self.peakno2 = len(self.anglelist2)-1
         self.reftime2 = float(str(self.surelist[self.peakno2]))
-        #self.pressure_time2 =float(str(self.reftime2)) - float(str(self.curtime2))
-        if self.reftime2 < 1:
+        if self.reftime2 < settings.wait_for_next_peak:
             return None        
-        if len(self.peaklist2) >= 1 and self.reftime2 - float(self.peaklist2[-1]) >= 0.3 :
+        if len(self.peaklist2) >= 1 and self.reftime2 - float(self.peaklist2[-1]) >= settings.wait_for_next_peak :
                 self.peaklist2.append(self.reftime2)
-                self.curtime2 = self.reftime2
                 self.peakcount2 += 1
         elif len(self.peaklist2) < 1 :
                 self.peaklist2.append(self.reftime2)
-                self.curtime2 = self.reftime2
                 self.peakcount2 += 1
 #-------------------------------HATA ARAMA VE KAYIT-------------------------------------------------------
     def zaman_hatasi(self,):
@@ -228,11 +203,21 @@ class analiz():
                         print("*" * 50)
                     self.errorflag = True
     def basinchatadetect(self,i):
-            if float(self.sensor1[i]) > settings.max_pressure or float(self.sensor2[i]) > settings.max_pressure: # HATALI DURUM KOŞULLARI
-                self.error_info += "\n\nHata Türü : Sensör Basınç Hatası\n" + "Süre : "+ str(self.surelist[i]) + "\nSensör 1 Basınç Değeri (kPa): " + str(self.sensor1[i]) + \
+            if float(self.sensor1[i]) > settings.max_pressure or float(self.sensor2[i]) > settings.max_pressure:     # HATALI DURUM KOŞULLARI
+                self.error_info += "\n\nHata Türü : Sensör Basınç Hatası\n" + "Süre : "+ str(self.surelist[i]) + \
+                                "\nSensör 1 Basınç Değeri (kPa): " + str(self.sensor1[i]) + \
                                 "\nSensör 2 Basınç Değeri (kPa): " + str(self.sensor2[i]) 
                 self.errorflag = True
                 return
+    def peak_sayi_hatasi(self,):
+            if self.peakcount1 <settings.default_peak_count or self.peakcount2 < settings.default_peak_count:  # PEAK SAYISI DEFAULTTAN AZ İSE HATA BİLDİR
+                if self.noprint != True:
+                    print("\nHATA ! Sensörlerin birinde Peak az, Hata bulunmuş olabilir.")
+                if self.peakhata != True:
+                    self.error_info += "\n Hata Tipi : Sensör Peak Sayısı Hatası\n"
+                    self.error_info += "\nTespit edilen Sensör 1 Peakler : "\
+                           +str(self.peaklist1) + "\nTespit edilen Sensör 2 Peakler : " +str(self.peaklist2)
+                self.errorflag = True
     def hatakayit(self,date):
             os.chdir(program_files.auto_errors)
             try:
@@ -280,8 +265,6 @@ class analiz():
                 name.set_ylabel(ylabel)   
             fig,(sub1,sub3) = plt.subplots(2)
             fig,(sub2,sub4) = plt.subplots(2)
-            #plt.figure()
-            #sub = fig.add_subplot(111)
             draw(sub1,"darkred","SENSÖR 1","Süre(s)","Basınç(MPa)",self.surelist,self.sensor1)
             draw(sub2,'darkred',"SENSÖR 2","Süre(s)","Basınç(MPa)",self.surelist,self.sensor2)
             draw(sub3,'lightblue',"SENSRÖR 1 AÇILAR", "Süre (s)"," Açı (Derece)",self.surelist,self.anglelist1)
@@ -427,7 +410,3 @@ class sorgu():
                 self.flag = True
                 break
         return self.flag
-    
-#yenisorgu = sorgu()
-
-#yeni = analiz(yenisorgu.dosya,yenisorgu.dosya_yolu)

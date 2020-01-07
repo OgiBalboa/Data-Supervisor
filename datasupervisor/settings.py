@@ -15,7 +15,7 @@ class settings():
 
         self.max_pressure = 20              # MAX BASINÇ ( Default = 20 MPa)
 
-        self.wait_for_data = 1             #Verinin oluşması için bekleme süresi (Default = 38 sec)
+        self.wait_for_data = 1              # Verinin oluşması için bekleme süresi (Default = 38 sec)
 
         self.min_angle = 10                 # ( Default = 10 degrees)
 
@@ -23,15 +23,16 @@ class settings():
 
         self.amp = 20                       # 3000 ve aşağı sayıdaki veriler için genlik değeri ( Default = 20)
 
+        self.inc_amp = 5                    # genlik değerinin makine tarafından birim arttırılma değeri
 #------------------------------EK AYARLAR--------------------------------------
-        self.wait_for_next_peak = 1         # Peak bulduktan sonra bekleme süresi(default = 1)
+        self.wait_for_next_peak = 0.5         # Peak bulduktan sonra bekleme süresi(default = 1)
 
         self.amp1 = 100                     # 3000 den fazla veri sayısı için genlik değeri ( Default = 100)
 
         self.jump = 20                      # düzensiz veriler için atlanacak süre miktarı
-                                            #( Default = 20 *t. t, birim zamandır. veri sayısına göre değişir.)
+                                            # ( Default = 20 *t. t, birim zamandır. veri sayısına göre değişir.)
 
-        self.sample_range_start = 3        #Doğrultma için alınan örneğin başlama zamanı (30sn/veri sayısı)* range_start (Default :  1500 veri için 30. -0.06 . saniye-)
+        self.sample_range_start = 3         #Doğrultma için alınan örneğin başlama zamanı (30sn/veri sayısı)* range_start (Default :  1500 veri için 30. -0.06 . saniye-)
 
         self.sample_range_stop = 101        # Doğrultma bitiş zamanı ( Default : 1500 veri için 101 -2. saniye-)
         
