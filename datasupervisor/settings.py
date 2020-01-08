@@ -5,6 +5,9 @@
 # Licence :     <GNU GCC>
 #--------------------------------------------
 import os
+import sys
+from datetime import datetime
+import linecache
 class settings():
     def __init__(self,): 
         self.first_peak_value = 10          # İLK PEAK İÇİN MİN DEĞER ( Default = 14 degrees)
@@ -54,19 +57,52 @@ class settings():
         self.paralel_stop = None
 
 
+#-------------------------------PROGRAMSAL HATA RAPORLAMA  ( DOKUNMAYIN ! ) ------------------
 
-
-
+class bug_report():
+    def __init__(self,):
+        try:
+            self.path = program_files()
+        except :
+            print("HATA ! PROGRAM FILES MODÜLÜ DOSYALARI OLUŞTURAMADI LÜTFEN MODÜLÜ KONTROL EDİNİZ !"),
+            input("Çıkmak için Enter'a basın..")
+            sys.exit()
+    def report(self,):
+        self.cur_path = os.getcwd()
+        os.chdir(self.path.perrors)
+        with open(str(datetime.now())[0:10]+".txt","+a") as errorlog:
+            self.error = str(self.PrintException())
+            errorlog.write(self.error)
+            errorlog.write("\n"+"*"*100)
+        os.chdir(self.cur_path)
+    def PrintException(self,):
+        exc_type, exc_obj, tb = sys.exc_info()
+        f = tb.tb_frame
+        lineno = tb.tb_lineno
+        filename = f.f_code.co_filename
+        linecache.checkcache(filename)
+        line = linecache.getline(filename, lineno, f.f_globals)
+        return 'EXCEPTION IN ({}, LINE {} "{}"): {}'.format(filename, lineno, line.strip(), exc_obj)
 
 
 #------------------------------PROGRAM DOSYA YOLLARINI TANITAN CLASS-------------------------------------
 class program_files:
     def __init__(self,):
         self.main = os.getcwd()
-        os.chdir("Datas")
+        try:
+            os.chdir("Datas")
+        except:
+            os.mkdir("Datas")
+            os.chdir("Datas")
         self.datas = os.getcwd()
         os.chdir("..")
-        os.chdir("Errors")
+        try:
+            os.chdir("Errors")
+        except:
+            os.mkdir("Errors")
+            os.chdir("Errors")
+            os.mkdir("Auto")
+            os.mkdir("Manual")
         self.errors = os.getcwd()
         os.chdir("Auto")
         self.auto_errors = os.getcwd()
@@ -74,7 +110,13 @@ class program_files:
         os.chdir("Manual")
         self.manu_errors = os.getcwd()
         os.chdir(self.main)
-        os.chdir("bin/Errors")
+        try:
+            os.chdir("bin/Errors")
+        except:
+            os.mkdir("bin")
+            os.chdir("bin")
+            os.mkdir("Errors")
+            os.chdir("Errors")
         self.perrors = os.getcwd()
         os.chdir(self.main)
             

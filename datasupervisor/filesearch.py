@@ -8,8 +8,9 @@ import os,glob
 import sys
 import time
 from datetime import datetime, date
-from settings import program_files
+from settings import program_files,bug_report
 program_files = program_files()
+bug = bug_report()
 class dosyabul():
     def __init__(self,):
         datetimeFormat = '%Y-%m-%d %H:%M:%S.%f'
@@ -33,11 +34,8 @@ class dosyabul():
                 os.mkdir(str(datetime.now())[0:10])
                 self.fileflag = True
                 self.filedate = str(datetime.now())[0:10]
-            except Exception as e :
-                os.chdir(program_files.perrors)
-                with open(str(datetime.now())[0:10]+".txt","+a") as errorlog:
-                    errorlog.write(str(e))
-                    errorlog.write("\n")
+            except :
+                bug.report()
                 time.sleep(1)
                 os.chdir(program_files.datas)
                 os.chdir(str(datetime.now())[0:10])
@@ -76,9 +74,8 @@ class dosyabul():
                 
                 try:
                     os.mkdir(str(datetime.now())[0:10])
-                    
-                except Exception as e :
-                    print(e)
+                except :
+                    bug.report()
         else:
             self.search_again = False
         

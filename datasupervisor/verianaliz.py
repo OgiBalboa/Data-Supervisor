@@ -4,14 +4,14 @@ import tkinter
 from tkinter import Button
 import time
 from datetime import datetime
-
+from settings import bug_report
+bug = bug_report()
 #-----------------------------------------------------
 # Name:         Data Supervisor Data Analisys Module
 # Author :      ogulcan@AISIN
 # Date :        13.12.2019
 # Licence :     <GNU GCC>
 #-----------------------------------------------------
-
 import matplotlib.pyplot as plt
 import filesearch
 import tkinter
@@ -20,9 +20,10 @@ from tkinter import filedialog
 from tkinter import messagebox
 import math
 import numpy as np
-from settings import settings,program_files
+from settings import settings,program_files ,bug_report
 settings = settings()
 program_files = program_files()
+bug = bug_report()
 class analiz():
     def __init__(self,isim,yol=None,aramaflag =None,noprint = None, date = None):
         self.vericount = 0
@@ -72,15 +73,14 @@ class analiz():
                 print("Hatalı basınç değeri tespit edildi ! ")
             try :
                 self.denetle() #ALINAN VERİLERİ İNCELE
-            except Exception as e:
-                pass
+            except :
+                bug.report()
             #-------------------------------PEAK SAYI HATALARI-------------------------------------------------------  
             self.peak_sayi_hatasi()
             #-------------------------------ENJEKSİYON SÜRE HATASI-------------------------------------------------------                  
             try:
                 self.zaman_hatasi() # ZAMAN HATASINI DENETLEYEN FONKSİYON
             except Exception as e:
-                pass
                 self.errorflag = True
             try :
                 self.info = "Veri Sayisi : " + str(self.vericount-8)+"\nSENSOR 1 ----> Peak Sayısı  :  " + str(self.peakcount1)
@@ -143,8 +143,8 @@ class analiz():
                             if int(self.anglelist1[-1]) >=settings.min_angle:
                                 self.gen2 += settings.inc_amp
                                 count2 = 0
-                    except Exception as e:
-                        print(e)
+                    except :
+                        bug.report()
             self.enjeksiyon_suresi1 = str(self.peaklist1[-1]-self.peaklist1[0])
             self.enjeksiyon_suresi2 = str(self.peaklist2[-1]-self.peaklist2[0]) # Enjeksiyon süresi hesaplanır. (ilk ve son peak)
             
@@ -205,8 +205,8 @@ class analiz():
     def basinchatadetect(self,i):
             if float(self.sensor1[i]) > settings.max_pressure or float(self.sensor2[i]) > settings.max_pressure:     # HATALI DURUM KOŞULLARI
                 self.error_info += "\n\nHata Türü : Sensör Basınç Hatası\n" + "Süre : "+ str(self.surelist[i]) + \
-                                "\nSensör 1 Basınç Değeri (kPa): " + str(self.sensor1[i]) + \
-                                "\nSensör 2 Basınç Değeri (kPa): " + str(self.sensor2[i]) 
+                                "\nSensör 1 Basınç Değeri (MPa): " + str(self.sensor1[i]) + \
+                                "\nSensör 2 Basınç Değeri (MPa): " + str(self.sensor2[i]) 
                 self.errorflag = True
                 return
     def peak_sayi_hatasi(self,):
@@ -223,16 +223,19 @@ class analiz():
             try:
                 os.mkdir(date)
             except:
-                pass
+                bug.report()
             finally:
                 os.chdir(date)
-            self.error_filename = "20" + self.isim[-17:-15] +"-"+ self.isim[-15:-13] +"-"+ self.isim[-13:-11] +"_" + self.isim[-11:-9] +"-"+ self.isim[-9:-7] +".txt"
-            self.errorlog = open(self.error_filename,'a+')
-            self.errorlog.write("\nOrijinal dosya adı :"+self.isim+"\n")
-            self.errorlog.write(self.info)
-            self.errorlog.write(self.error_info)
-            self.errorlog.write('\n' + '*'*50 + '\n')
-            self.errorlog.close()
+            try:
+                self.error_filename = "20" + self.isim[-17:-15] +"-"+ self.isim[-15:-13] +"-"+ self.isim[-13:-11] +"_" + self.isim[-11:-9] +"-"+ self.isim[-9:-7] +".txt"
+                self.errorlog = open(self.error_filename,'a+')
+                self.errorlog.write("\nOrijinal dosya adı :"+self.isim+"\n")
+                self.errorlog.write(self.info)
+                self.errorlog.write(self.error_info)
+                self.errorlog.write('\n' + '*'*50 + '\n')
+                self.errorlog.close()
+            except:
+                bug.report()
   
 #-------------------------------VERİLERİN AÇILARINI BULMAK-------------------------------------------------------       
     def acibul1(self,veri,gen):

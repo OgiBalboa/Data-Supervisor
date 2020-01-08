@@ -26,19 +26,29 @@ global dosyayolu
 dosyayolu = os.getcwd()
 global son_dosya_adi
 son_dosya_adi = ""
-from settings import settings, program_files
+from settings import settings, program_files,bug_report
 settings = settings()
 program_files = program_files()
+bug = bug_report()
 #-------------------------------MAKİNE İLE PARALEL ÇALIŞMA--------------------------------------------
 global sttw # Status window için global değişken
 def parallel():   # Makine ile paralel çalışmayı sonsuz döngüye sokabilmek için ana programdan ayrılması gerekmekte. Bunun için threading kullanıldı.
     global file
+    global ec
+    ec = 0
     while 1:
             if settings.paralel_stop != True:
                 file = None
                 file = filesearch.dosyabul()
                 #Label(sttw,text = "reftime : " + str(file.reftime),fg= "white",bg = "#094BFC",font=("Arial",12)).place(x=0,y=95)
-                paralel()
+                try:
+                    paralel()
+                except:
+                    bug.report()
+                    settings.paralel_stop = True
+                    file.status = " PROGRAMDA HATA OLUŞTU LÜTFEN TEKRAR BAŞLATIN !"
+                    durum_gui.set("\nDurum : " + str(file.status)+"\nBULUNAN HATA :"+bug.error)
+                    durum_gui.get()
             else:
                 time.sleep(1)
 def paralel():
@@ -48,14 +58,6 @@ def paralel():
     global sttw
     global file
     def gui_update():
-        
-        """
-        Label(sttw,text = "\nHatalı Veri Sayısı : " + str(hata_count),fg= "red",bg = "#094BFC",font=("Arial",12)).place(x=0,y=180)
-        Label(sttw,text = "\nTaranan veri sayısı : " + str(veri_count),fg= "white",bg = "#094BFC",font=("Arial",12)).place(x=0,y=120)
-        if str(file.data_name) != None:
-            Label(sttw,text = "\nSon Taranan Dosya : " + str(file.data_name),fg= "white",bg = "#094BFC",font=("Arial",12)).place(x=0,y=240)
-        Label(sttw,text = "\nDurum : " + str(file.status),fg= "green",bg = "#094BFC",font=("Arial",12)).place(x=0,y=300)
-        """
         tarama_tarihi_gui.set("Tarama Başlama Tarihi : "+ str(datetime.now())[0:16])
         tarama_tarihi_gui.get()
         veri_sayisi_gui.set("Taranan Veri sayısı : " + str(veri_count))
@@ -70,6 +72,7 @@ def paralel():
     file.detect_new(file.filedate) # Yeni veri bulmak için
     gui_update()
     if file.search_again == True:
+        ec = 0
         return
     file.fileflag = None
     while 1:
@@ -87,12 +90,15 @@ def paralel():
                         if analiz.errorflag == True:
                             hata_count+= 1
                         gui_update()
+                        ec  = 0
                         break
                 else :
                     file.detect_new(file.filedate)
                     if file.search_again == True:
+                        ec = 0
                         break
             elif settings.paralel_stop == True:
+                ec = 0
                 break
 
 def run(again = None):
@@ -140,7 +146,7 @@ def run(again = None):
         Label(sttw,textvariable = tarama_tarihi_gui,fg= "white",bg = "#094BFC",font=("Arial",12)).place(x=0,y=10)
         Label(sttw,textvariable =veri_sayisi_gui ,fg= "white",bg = "#094BFC",font=("Arial",12)).place(x=0,y=120)
         Label(sttw,textvariable =hatali_veri_gui ,fg= "red",bg = "#094BFC",font=("Arial",12)).place(x=0,y=180)
-        Label(sttw,textvariable = durum_gui,fg= "green",bg = "#094BFC",font=("Arial",12)).place(x=0,y=300)
+        Label(sttw,textvariable = durum_gui,fg= "green",bg = "#094BFC",justify = LEFT,font=("Arial",12)).place(x=0,y=300)
         Label(sttw,text = "_"*150,fg= "white",bg = "#094BFC").place(x=0,y=100)
         Label(sttw,text = "_"*150,fg= "white",bg = "#094BFC").place(x=0,y=220)
         Button(sttw,text = "TARAMAYI DURDUR ",font=("Arial",12),fg = "white",bg = "#570215",command = stop).place(x=50,y=500)
@@ -178,12 +184,15 @@ def hata_ekrani():
            except:
                pass
            os.chdir(filename)
-           fl = open(data_name,"a+")
-           errorfilename = "\nOrijinal Dosya Adı : " + verino.files[i] +"\n"
-           fl.write(errorfilename)
-           fl.write(error.info)
-           fl.write(error.error_info)
-           fl.close()
+           try:
+               fl = open(data_name,"a+")
+               errorfilename = "\nOrijinal Dosya Adı : " + verino.files[i] +"\n"
+               fl.write(errorfilename)
+               fl.write(error.info)
+               fl.write(error.error_info)
+               fl.close()
+           except:
+                bug.report()
            os.chdir(recov)
         os.chdir(dosyayolu)
         hata_gui.destroy()
@@ -476,5 +485,6 @@ if __name__== "__main__":
     except:
         try:
             Menu()
-        except KeyboardInterrupt:
-            sys.exit()
+        except :
+            bug.report()
+            run()
